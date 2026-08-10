@@ -12,6 +12,18 @@ If migration `001` stopped with a duplicate foreign-key-name error, run `002_com
 
 After migrations `001` and `002`, apply `003_rank_tier_values.sql`. It converts role ranks from free text to numeric tiers used by the team-balancer data model: Iron is `1` through Challenger at `10`.
 
+Apply `004_admin_sessions.sql` to add server-side login sessions. Create the first owner account by setting temporary `ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD` environment variables, then run `npm.cmd run admin:create`. Passwords must be at least 12 characters and are stored as scrypt hashes.
+
+PowerShell setup:
+
+    Get-Content -Raw .\db\migrations\004_admin_sessions.sql | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p --default-character-set=utf8mb4
+    $env:ADMIN_EMAIL = "owner@example.com"
+    $env:ADMIN_NAME = "Owner"
+    $env:ADMIN_ROLE = "owner"
+    $env:ADMIN_PASSWORD = [System.Net.NetworkCredential]::new("", (Read-Host "Admin password" -AsSecureString)).Password
+    npm.cmd run admin:create
+    Remove-Item Env:ADMIN_EMAIL, Env:ADMIN_NAME, Env:ADMIN_ROLE, Env:ADMIN_PASSWORD
+
 The schema is independent from Riot services. A match stores its two teams, each team stores its players, and each player entry can record one of the five roles (Top, Jungle, Middle, Bottom, Support), champion, rank at the time of the match, and K/D/A. `players` and `champions` are reusable reference tables, while `admin_accounts` is ready for authenticated administration.
 
 Do not store plaintext passwords. Create admin accounts with an Argon2id or bcrypt hash in `password_hash`, and enforce authentication in the API layer before exposing write operations.

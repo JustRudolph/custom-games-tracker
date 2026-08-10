@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getPlayerLabel, getPlayerName, getRankLabel } from "../utils/matches.js";
+import { getPlayerLabel, getPlayerName } from "../utils/matches.js";
 import RoleIcon from "./RoleIcon.jsx";
 
 function PlayerLine({ player, team, champions }) {
@@ -10,7 +10,6 @@ function PlayerLine({ player, team, champions }) {
     <div className={"match-player " + team}>
       <span className="match-player-name">{details.name}</span>
       <RoleIcon role={details.role} />
-      <span className="match-player-rank">{getRankLabel(details.rank)}</span>
       <span className="match-player-champion">{champion && <img src={champion.icon} alt="" />}<span>{details.champion}</span></span>
       <span className="match-player-kda">{details.kda}</span>
     </div>
@@ -30,7 +29,6 @@ function TeamSection({ match, team, champions }) {
       <div className="match-columns">
         <span>Name</span>
         <span>Role</span>
-        <span>Rank</span>
         <span>Champion</span>
         <span>KDA</span>
       </div>
@@ -58,7 +56,7 @@ function CollapsedMatchup({ match, champions, onExpand }) {
   return <div className={"collapsed-matchup winner-" + match.winner}><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={match.winner === "blue"} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={match.winner === "red"} /><button className="compact-expand" type="button" aria-label="Expand match" onClick={onExpand}>⌄</button></div>;
 }
 
-function MatchCard({ match, onDelete, champions }) {
+function MatchCard({ match, onDelete, champions, canWrite }) {
   const [isExpanded, setIsExpanded] = useState(false);
   return (
     <article className={"match-card " + (isExpanded ? "expanded" : "collapsed")}>
@@ -66,13 +64,13 @@ function MatchCard({ match, onDelete, champions }) {
         <span>{match.date}</span>
         <span>{match.notes || "Custom game"}</span>
         <span className={"match-winner " + match.winner}>{match.winner} victory</span>
-        <button
+        {canWrite && <button
           className="delete"
           aria-label="Delete match"
           onClick={() => onDelete(match)}
         >
           x
-        </button>
+        </button>}
         {isExpanded && <button className="collapse-match" type="button" aria-label="Collapse match" aria-expanded="true" onClick={() => setIsExpanded(false)}>⌃</button>}
       </div>}
       {isExpanded && <div className="match-card-body"><TeamSection match={match} team="blue" champions={champions} /><TeamSection match={match} team="red" champions={champions} /></div>}
@@ -88,6 +86,7 @@ export default function MatchHistory({
   onDeleteMatch,
   onExport,
   champions,
+  canWrite,
 }) {
   const visibleMatches = matches.filter((match) =>
     [...match.blue, ...match.red]
@@ -101,7 +100,7 @@ export default function MatchHistory({
     <div className="panel history-panel">
       <div className="panel-head history-head">
         <div>
-          <p className="eyebrow">THE LEDGER</p>
+          <p className="eyebrow">MATCH ARCHIVE</p>
           <h2>Match history</h2>
         </div>
         <div className="history-tools">
@@ -124,6 +123,7 @@ export default function MatchHistory({
               match={match}
               onDelete={onDeleteMatch}
               champions={champions}
+              canWrite={canWrite}
             />
           ))
         ) : (

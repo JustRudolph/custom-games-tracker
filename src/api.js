@@ -1,6 +1,7 @@
 async function request(path, options) {
   const response = await fetch("/api" + path, {
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     ...options,
   });
   if (!response.ok) {
@@ -11,6 +12,9 @@ async function request(path, options) {
 }
 
 export const api = {
+  login: (credentials) => request("/auth/login", { method: "POST", body: JSON.stringify(credentials) }),
+  getCurrentAdmin: () => request("/auth/me"),
+  logout: () => request("/auth/logout", { method: "POST" }),
   getPlayers: () => request("/players"),
   createPlayer: (player) => request("/players", { method: "POST", body: JSON.stringify(player) }),
   updatePlayer: (player) => request("/players/" + player.id, { method: "PUT", body: JSON.stringify(player) }),

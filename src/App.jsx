@@ -4,17 +4,23 @@ import Hero from "./components/Hero.jsx";
 import FullLeaderboard from "./components/FullLeaderboard.jsx";
 import MatchForm from "./components/MatchForm.jsx";
 import MatchHistory from "./components/MatchHistory.jsx";
+import LoginPage from "./components/LoginPage.jsx";
 import PlayerInsights from "./components/PlayerInsights.jsx";
 import PlayerDashboard from "./components/PlayerDashboard.jsx";
+import PlayerLookup from "./components/PlayerLookup.jsx";
 import SummaryStats from "./components/SummaryStats.jsx";
 import { api } from "./api.js";
 import { fetchChampionCatalog, getPlayerName, getPlayerStats, rankPlayers } from "./utils/matches.js";
 
 function App() {
   const [matches, setMatches] = useState([]);
+  const [admin, setAdmin] = useState(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [playerSearch, setPlayerSearch] = useState("");
   const [view, setView] = useState("dashboard");
   const [isMatchModalOpen, setIsMatchModalOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [players, setPlayers] = useState([]);
   const [dataError, setDataError] = useState("");
   const [dataDragonChampions, setDataDragonChampions] = useState([]);
@@ -41,6 +47,10 @@ function App() {
 
   useEffect(() => {
     loadDatabaseData();
+    api.getCurrentAdmin()
+      .then(setAdmin)
+      .catch(() => setAdmin(null))
+      .finally(() => setIsAuthLoading(false));
   }, []);
 
   useEffect(() => {
@@ -66,6 +76,19 @@ function App() {
   async function addMatch(match) {
     const saved = await api.createMatch(match);
     setMatches((current) => [{ ...match, id: saved.id }, ...current]);
+  }
+
+  async function login(credentials) {
+    const authenticatedAdmin = await api.login(credentials);
+    setAdmin(authenticatedAdmin);
+    setIsLoginOpen(false);
+    await loadDatabaseData();
+  }
+
+  async function logout() {
+    await api.logout();
+    setAdmin(null);
+    setView("dashboard");
   }
 
   async function savePlayer(player) {
@@ -97,10 +120,21 @@ function App() {
         type: "application/json",
       }),
     );
-    link.download = "customs-ledger.json";
+    link.download = "diamond-dynasty-matches.json";
     link.click();
     URL.revokeObjectURL(link.href);
   }
+
+  const toggleTheme = () => setTheme((current) => (current === "light" ? "dark" : "light"));
+  const canWrite = admin?.role === "owner" || admin?.role === "admin";
+
+  function searchPlayers(value) {
+    setPlayerSearch(value);
+    if (value.trim()) setView("players");
+    else if (!canWrite && view === "players") setView("dashboard");
+  }
+
+  if (isAuthLoading) return <div className="auth-loading">Loading...</div>;
 
   return (
     <div className="shell">
@@ -108,13 +142,21 @@ function App() {
         hasMatches={matches.length > 0}
         onClearMatches={clearMatches}
         onOpenPlayers={async () => { await loadDatabaseData(); setView("players"); }}
+        playerSearch={playerSearch}
+        onPlayerSearch={searchPlayers}
+        admin={admin}
+        canWrite={canWrite}
+        onLogin={() => setIsLoginOpen(true)}
+        onLogout={logout}
         theme={theme}
-        onToggleTheme={() =>
-          setTheme((current) => (current === "light" ? "dark" : "light"))
-        }
+        onToggleTheme={toggleTheme}
       />
       {view === "players" ? (
-        <PlayerDashboard players={players} dataError={dataError} onRetry={loadDatabaseData} onSavePlayer={savePlayer} onDeletePlayer={deletePlayer} onBack={() => setView("dashboard")} />
+        canWrite ? (
+          <PlayerDashboard players={players} dataError={dataError} canWrite={canWrite} onRetry={loadDatabaseData} onSavePlayer={savePlayer} onDeletePlayer={deletePlayer} onBack={() => setView("dashboard")} />
+        ) : (
+          <PlayerLookup players={rankedPlayers} matches={matches} champions={dataDragonChampions} query={playerSearch} onQueryChange={searchPlayers} dataError={dataError} onRetry={loadDatabaseData} onBack={() => setView("dashboard")} />
+        )
       ) : view === "leaderboard" ? (
         <FullLeaderboard
           players={rankedPlayers}
@@ -129,14 +171,14 @@ function App() {
             currentPlayer={currentPlayer}
             topPlayer={topPlayer}
           />
-          <div className="dashboard-actions">
+          {canWrite && <div className="dashboard-actions">
             <button
               className="primary-btn log-custom-button"
               onClick={() => setIsMatchModalOpen(true)}
             >
               Log a custom <span>-&gt;</span>
             </button>
-          </div>
+          </div>}
           <section className="dashboard-layout">
             <section className="workspace">
               <MatchHistory
@@ -146,6 +188,7 @@ function App() {
                 onDeleteMatch={deleteMatch}
                 onExport={exportMatches}
                 champions={dataDragonChampions}
+                canWrite={canWrite}
               />
             </section>
             <PlayerInsights
@@ -165,6 +208,7 @@ function App() {
           )}
         </main>
       )}
+      {isLoginOpen && <LoginPage onLogin={login} onClose={() => setIsLoginOpen(false)} />}
       <footer></footer>
     </div>
   );
