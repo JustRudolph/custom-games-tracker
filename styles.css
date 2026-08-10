@@ -7,6 +7,20 @@
   --blue: #3174d4;
   --red: #e25b57;
   --yellow: #f2b84b;
+  --input: #fbfcfd;
+  --soft: #f3f5f7;
+  --bar: #edf0f2;
+}
+
+:root[data-theme="dark"] {
+  --ink: #edf2f7;
+  --muted: #9aa8b5;
+  --line: #34414d;
+  --paper: #111820;
+  --white: #1b2530;
+  --input: #141e27;
+  --soft: #26323d;
+  --bar: #34414d;
 }
 
 * {
@@ -80,10 +94,27 @@ body {
   cursor: pointer;
 }
 
+.theme-toggle {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--muted);
+  font: 500 12px "Space Grotesk";
+  cursor: pointer;
+}
+
+.theme-toggle span {
+  font-size: 15px;
+  line-height: 1;
+}
+
 .hero {
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
   padding: 65px 0 57px;
 }
 .eyebrow {
@@ -103,31 +134,9 @@ body {
 .lede {
   max-width: 400px;
   margin: 25px 0 0;
-  color: #667482;
+  color: var(--muted);
   line-height: 1.55;
 }
-.hero-badge {
-  min-width: 175px;
-  padding: 24px 28px;
-  text-align: right;
-  border: 1px solid var(--line);
-}
-.hero-badge span {
-  display: block;
-  color: var(--muted);
-  font: 10px "DM Mono";
-  letter-spacing: 0.1em;
-}
-.hero-badge strong {
-  display: block;
-  margin: 7px 0;
-  font-size: 42px;
-  letter-spacing: -0.06em;
-}
-.hero-badge small {
-  color: var(--muted);
-}
-
 .stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -143,7 +152,7 @@ body {
   border: 0;
 }
 .stat-card.accent {
-  background: #e8f0fe;
+  background: color-mix(in srgb, var(--blue) 12%, var(--white));
 }
 .stat-card strong {
   display: block;
@@ -159,11 +168,12 @@ body {
 
 .workspace {
   display: grid;
-  grid-template-columns: 390px 1fr;
+  grid-template-columns: minmax(0, 390px) minmax(0, 1fr);
   gap: 18px;
   margin-top: 42px;
 }
 .panel {
+  min-width: 0;
   background: var(--white);
   border: 1px solid var(--line);
 }
@@ -196,11 +206,13 @@ label {
 }
 input,
 textarea {
+  width: 100%;
+  min-width: 0;
   padding: 11px 12px;
   border: 1px solid var(--line);
   border-radius: 2px;
   outline: none;
-  background: #fbfcfd;
+  background: var(--input);
   color: var(--ink);
   font: 13px "Space Grotesk";
 }
@@ -216,10 +228,11 @@ textarea {
 
 .team-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 9px;
 }
 .team-block {
+  min-width: 0;
   padding: 12px 12px 0;
   border: 1px solid var(--line);
 }
@@ -252,21 +265,26 @@ textarea {
 }
 .winner-row {
   display: flex;
+  gap: 12px;
   align-items: center;
   justify-content: space-between;
 }
 .winner-options {
   display: flex;
   gap: 7px;
+  min-width: 0;
 }
 .winner-options label {
   display: flex;
   gap: 5px;
   align-items: center;
   padding: 8px 10px;
-  background: #f3f5f7;
+  background: var(--soft);
+  white-space: nowrap;
 }
 .winner-options input {
+  width: auto;
+  min-width: auto;
   padding: 0;
   accent-color: var(--blue);
 }
@@ -346,6 +364,14 @@ textarea {
 .result.red {
   color: var(--red);
 }
+
+.team-blue {
+  color: var(--blue);
+}
+
+.team-red {
+  color: var(--red);
+}
 .delete {
   border: 0;
   background: none;
@@ -383,7 +409,7 @@ textarea {
 .bar {
   height: 3px;
   margin-top: 12px;
-  background: #edf0f2;
+  background: var(--bar);
 }
 .bar i {
   display: block;
@@ -407,10 +433,6 @@ footer {
   .hero h1 {
     font-size: 49px;
   }
-  .hero-badge {
-    margin-top: 30px;
-    text-align: left;
-  }
   .stats {
     grid-template-columns: 1fr 1fr;
   }
@@ -422,6 +444,13 @@ footer {
   }
   .workspace {
     grid-template-columns: 1fr;
+  }
+  .team-grid {
+    grid-template-columns: 1fr;
+  }
+  .winner-row {
+    align-items: flex-start;
+    flex-direction: column;
   }
   .player-grid {
     grid-template-columns: 1fr 1fr;
