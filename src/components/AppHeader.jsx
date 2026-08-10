@@ -1,6 +1,7 @@
 export default function AppHeader({
   hasMatches,
   onClearMatches,
+  onOpenPlayers,
   theme,
   onToggleTheme,
 }) {
@@ -11,6 +12,7 @@ export default function AppHeader({
         Customs Ledger
       </div>
       <div className="top-actions">
+        <button className="ghost-btn" onClick={onOpenPlayers}>Players</button>
         <button
           className="theme-toggle"
           onClick={onToggleTheme}

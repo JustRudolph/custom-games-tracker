@@ -12,7 +12,9 @@ export default function SummaryStats({ matches, currentPlayer, topPlayer }) {
       </div>
       <div className="stat-card">
         <span className="label">YOUR WINRATE</span>
-        <strong>{currentPlayer ? `${getWinRate(currentPlayer[1])}%` : "-"}</strong>
+        <strong>
+          {currentPlayer ? `${getWinRate(currentPlayer[1])}%` : "-"}
+        </strong>
         <span className="sub">
           {currentPlayer
             ? `${currentPlayer[1].wins}W - ${currentPlayer[1].games - currentPlayer[1].wins}L`
@@ -32,7 +34,9 @@ export default function SummaryStats({ matches, currentPlayer, topPlayer }) {
         <span className="label">TOP PLAYER</span>
         <strong>{topPlayer?.[0] || "-"}</strong>
         <span className="sub">
-          {topPlayer ? `${getWinRate(topPlayer[1])}% winrate` : "not enough data"}
+          {topPlayer
+            ? `${getWinRate(topPlayer[1])}% winrate`
+            : "not enough data"}
         </span>
       </div>
     </section>

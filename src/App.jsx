@@ -1,21 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import AppHeader from "./components/AppHeader.jsx";
 import Hero from "./components/Hero.jsx";
+import FullLeaderboard from "./components/FullLeaderboard.jsx";
 import MatchForm from "./components/MatchForm.jsx";
 import MatchHistory from "./components/MatchHistory.jsx";
 import PlayerInsights from "./components/PlayerInsights.jsx";
+import PlayerDashboard from "./components/PlayerDashboard.jsx";
 import SummaryStats from "./components/SummaryStats.jsx";
-import { getPlayerStats, rankPlayers, STORAGE_KEY } from "./utils/matches.js";
+import { api } from "./api.js";
+import { fetchChampionCatalog, getPlayerName, getPlayerStats, rankPlayers } from "./utils/matches.js";
 
 function App() {
-  const [matches, setMatches] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    } catch {
-      return [];
-    }
-  });
+  const [matches, setMatches] = useState([]);
   const [search, setSearch] = useState("");
+  const [view, setView] = useState("dashboard");
+  const [isMatchModalOpen, setIsMatchModalOpen] = useState(false);
+  const [players, setPlayers] = useState([]);
+  const [dataError, setDataError] = useState("");
+  const [dataDragonChampions, setDataDragonChampions] = useState([]);
+  const [isChampionLibraryLoading, setIsChampionLibraryLoading] = useState(true);
   const [theme, setTheme] = useState(
     () => localStorage.getItem("customs-ledger-theme") || "light",
   );
@@ -25,9 +28,29 @@ function App() {
     localStorage.setItem("customs-ledger-theme", theme);
   }, [theme]);
 
+  async function loadDatabaseData() {
+    try {
+      const [loadedMatches, loadedPlayers] = await Promise.all([api.getMatches(), api.getPlayers()]);
+      setMatches(loadedMatches);
+      setPlayers(loadedPlayers);
+      setDataError("");
+    } catch (error) {
+      setDataError(error.message);
+    }
+  }
+
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(matches));
-  }, [matches]);
+    loadDatabaseData();
+  }, []);
+
+  useEffect(() => {
+    let isCurrent = true;
+    fetchChampionCatalog()
+      .then((champions) => isCurrent && setDataDragonChampions(champions))
+      .catch(() => {})
+      .finally(() => isCurrent && setIsChampionLibraryLoading(false));
+    return () => { isCurrent = false; };
+  }, []);
 
   const playerStats = useMemo(() => getPlayerStats(matches), [matches]);
   const rankedPlayers = useMemo(() => rankPlayers(playerStats), [playerStats]);
@@ -38,17 +61,31 @@ function App() {
     ([, first], [, second]) =>
       second.wins / second.games - first.wins / first.games,
   )[0];
+  const playerNames = useMemo(() => [...new Set([...players.filter((player) => player.active).map((player) => player.name), ...matches.flatMap((match) => [...match.blue, ...match.red].map(getPlayerName))])].sort(), [matches, players]);
 
-  function addMatch(match) {
-    setMatches((current) => [match, ...current]);
+  async function addMatch(match) {
+    const saved = await api.createMatch(match);
+    setMatches((current) => [{ ...match, id: saved.id }, ...current]);
   }
 
-  function deleteMatch(match) {
-    setMatches((current) => current.filter((item) => item !== match));
+  async function savePlayer(player) {
+    const saved = player.id ? await api.updatePlayer(player) : await api.createPlayer(player);
+    setPlayers((current) => player.id ? current.map((item) => item.id === saved.id ? saved : item) : [...current, saved]);
   }
 
-  function clearMatches() {
+  async function deleteMatch(match) {
+    await api.deleteMatch(match.id);
+    setMatches((current) => current.filter((item) => item.id !== match.id));
+  }
+
+  async function deletePlayer(id) {
+    await api.deletePlayer(id);
+    setPlayers((current) => current.filter((player) => player.id !== id));
+  }
+
+  async function clearMatches() {
     if (matches.length && confirm("Delete every logged match?")) {
+      await api.deleteMatches(matches.map((match) => match.id));
       setMatches([]);
     }
   }
@@ -70,31 +107,65 @@ function App() {
       <AppHeader
         hasMatches={matches.length > 0}
         onClearMatches={clearMatches}
+        onOpenPlayers={async () => { await loadDatabaseData(); setView("players"); }}
         theme={theme}
         onToggleTheme={() =>
           setTheme((current) => (current === "light" ? "dark" : "light"))
         }
       />
-      <main>
-        <Hero />
-        <SummaryStats
-          matches={matches}
-          currentPlayer={currentPlayer}
-          topPlayer={topPlayer}
+      {view === "players" ? (
+        <PlayerDashboard players={players} dataError={dataError} onRetry={loadDatabaseData} onSavePlayer={savePlayer} onDeletePlayer={deletePlayer} onBack={() => setView("dashboard")} />
+      ) : view === "leaderboard" ? (
+        <FullLeaderboard
+          players={rankedPlayers}
+          onBack={() => setView("dashboard")}
         />
-        <section className="workspace">
-          <MatchForm onAddMatch={addMatch} />
-          <MatchHistory
+      ) : (
+        <main>
+          {dataError && <div className="data-error">Database connection failed: {dataError}</div>}
+          <Hero />
+          <SummaryStats
             matches={matches}
-            search={search}
-            onSearchChange={setSearch}
-            onDeleteMatch={deleteMatch}
-            onExport={exportMatches}
+            currentPlayer={currentPlayer}
+            topPlayer={topPlayer}
           />
-        </section>
-        <PlayerInsights players={rankedPlayers} />
-      </main>
-      <footer>Built for the five-stack. Data never leaves this browser.</footer>
+          <div className="dashboard-actions">
+            <button
+              className="primary-btn log-custom-button"
+              onClick={() => setIsMatchModalOpen(true)}
+            >
+              Log a custom <span>-&gt;</span>
+            </button>
+          </div>
+          <section className="dashboard-layout">
+            <section className="workspace">
+              <MatchHistory
+                matches={matches}
+                search={search}
+                onSearchChange={setSearch}
+                onDeleteMatch={deleteMatch}
+                onExport={exportMatches}
+                champions={dataDragonChampions}
+              />
+            </section>
+            <PlayerInsights
+              players={rankedPlayers}
+              onViewAll={() => setView("leaderboard")}
+            />
+          </section>
+          {isMatchModalOpen && (
+            <MatchForm
+              onAddMatch={addMatch}
+              onClose={() => setIsMatchModalOpen(false)}
+              playerNames={playerNames}
+              champions={dataDragonChampions}
+              isChampionLibraryLoading={isChampionLibraryLoading}
+              savedPlayers={players}
+            />
+          )}
+        </main>
+      )}
+      <footer></footer>
     </div>
   );
 }
