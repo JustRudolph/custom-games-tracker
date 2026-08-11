@@ -60,7 +60,7 @@ function MatchCard({ match, onDelete, champions, canWrite }) {
   const [isExpanded, setIsExpanded] = useState(false);
   return (
     <article className={"match-card " + (isExpanded ? "expanded" : "collapsed")}>
-      {isExpanded && <div className="match-card-top">
+      {isExpanded && <div className={"match-card-top " + (canWrite ? "can-write" : "guest")}>
         <span>{match.date}</span>
         <span>{match.notes || "Custom game"}</span>
         <span className={"match-winner " + match.winner}>{match.winner} victory</span>

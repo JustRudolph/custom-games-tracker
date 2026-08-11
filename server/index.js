@@ -14,7 +14,7 @@ const loginAttempts = new Map();
 async function requireAuth(req, res, next) {
   const token = getSessionToken(req);
   if (!token) return res.status(401).json({ error: "Authentication required." });
-  const [rows] = await db.execute("SELECT a.id, a.email, a.display_name, a.role FROM admin_sessions s JOIN admin_accounts a ON a.id = s.admin_id WHERE s.token_hash = ? AND s.expires_at > NOW() AND a.is_active = TRUE", [hashToken(token)]);
+  const [rows] = await db.execute("SELECT a.id, a.username, a.display_name, a.role FROM admin_sessions s JOIN admin_accounts a ON a.id = s.admin_id WHERE s.token_hash = ? AND s.expires_at > NOW() AND a.is_active = TRUE", [hashToken(token)]);
   if (!rows.length) return res.status(401).json({ error: "Session expired." });
   req.admin = rows[0];
   next();
@@ -37,17 +37,17 @@ async function saveRanks(connection, playerId, roleRanks) {
 
 app.get("/api/health", async (_req, res) => { await db.query("SELECT 1"); res.json({ ok: true }); });
 app.post("/api/auth/login", async (req, res) => {
-  const email = String(req.body.email || "").trim().toLowerCase();
+  const username = String(req.body.username || "").trim().toLowerCase();
   const password = String(req.body.password || "");
   const attempt = loginAttempts.get(req.ip);
   if (attempt?.blockedUntil > Date.now()) return res.status(429).json({ error: "Too many attempts. Try again shortly." });
-  const [accounts] = await db.execute("SELECT id, email, display_name, password_hash, role, is_active FROM admin_accounts WHERE email = ?", [email]);
+  const [accounts] = await db.execute("SELECT id, username, display_name, password_hash, role, is_active FROM admin_accounts WHERE username = ?", [username]);
   const account = accounts[0];
   const valid = account?.is_active && await verifyPassword(password, account.password_hash);
   if (!valid) {
     const failures = (attempt?.failures || 0) + 1;
     loginAttempts.set(req.ip, { failures, blockedUntil: failures >= 5 ? Date.now() + 5 * 60 * 1000 : 0 });
-    return res.status(401).json({ error: "Invalid email or password." });
+    return res.status(401).json({ error: "Invalid username or password." });
   }
   loginAttempts.delete(req.ip);
   const session = createSession();
@@ -55,9 +55,9 @@ app.post("/api/auth/login", async (req, res) => {
   await db.execute("INSERT INTO admin_sessions (admin_id, token_hash, expires_at) VALUES (?, ?, ?)", [account.id, session.tokenHash, session.expiresAt]);
   await db.execute("UPDATE admin_accounts SET last_login_at = NOW() WHERE id = ?", [account.id]);
   res.setHeader("Set-Cookie", sessionCookie(session.token, session.expiresAt));
-  res.json({ id: String(account.id), email: account.email, displayName: account.display_name, role: account.role });
+  res.json({ id: String(account.id), username: account.username, displayName: account.display_name, role: account.role });
 });
-app.get("/api/auth/me", requireAuth, (req, res) => res.json({ id: String(req.admin.id), email: req.admin.email, displayName: req.admin.display_name, role: req.admin.role }));
+app.get("/api/auth/me", requireAuth, (req, res) => res.json({ id: String(req.admin.id), username: req.admin.username, displayName: req.admin.display_name, role: req.admin.role }));
 app.post("/api/auth/logout", async (req, res) => { const token = getSessionToken(req); if (token) await db.execute("DELETE FROM admin_sessions WHERE token_hash = ?", [hashToken(token)]); res.setHeader("Set-Cookie", clearSessionCookie()); res.status(204).end(); });
 
 app.get("/api/players", async (_req, res) => res.json(await getPlayers()));

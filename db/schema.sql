@@ -3,7 +3,7 @@ USE customs_ledger;
 
 CREATE TABLE admin_accounts (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, 
-  email VARCHAR(255) NOT NULL, 
+  username VARCHAR(32) NOT NULL,
   display_name VARCHAR(120) NOT NULL, 
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('owner', 'admin', 'viewer') NOT NULL DEFAULT 'admin', 
@@ -11,7 +11,7 @@ CREATE TABLE admin_accounts (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id), 
-  UNIQUE KEY uq_admin_email (email)
+  UNIQUE KEY uq_admin_username (username)
 ) ENGINE=InnoDB;
 
 CREATE TABLE admin_sessions (
