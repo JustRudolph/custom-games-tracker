@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 export default function AppHeader({
+  onOpenDashboard,
   onOpenPlayers,
   onOpenLeaderboard,
   playerSearch,
@@ -56,10 +57,10 @@ export default function AppHeader({
 
   return (
     <header className={"topbar " + (isMenuOpen ? "menu-open" : "")} ref={headerRef}>
-      <div className="brand">
+      <button className="brand" type="button" onClick={() => runAction(onOpenDashboard)} aria-label="Back to dashboard">
         <span className="brand-mark" aria-hidden="true" />
         Diamond Dynasty
-      </div>
+      </button>
       <button
         className="mobile-menu-toggle"
         type="button"

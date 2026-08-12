@@ -54,7 +54,7 @@ function CompactTeam({ players, champions, team, isWinner }) {
 }
 
 function CollapsedMatchup({ match, champions, onExpand }) {
-  return <div className={"collapsed-matchup winner-" + match.winner}><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={match.winner === "blue"} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={match.winner === "red"} /><button className="compact-expand" type="button" aria-label="Expand match" onClick={onExpand}>⌄</button></div>;
+  return <div className={"collapsed-matchup winner-" + match.winner}><span className={"match-type-badge " + (match.matchType === "spin" ? "spin" : "manual")}>{match.matchType === "spin" ? "Spin wheel" : "Manual"}</span><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={match.winner === "blue"} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={match.winner === "red"} /><button className="compact-expand" type="button" aria-label="Expand match" onClick={onExpand}>⌄</button></div>;
 }
 
 function MatchCard({ match, onDelete, champions, canWrite }) {
@@ -63,6 +63,7 @@ function MatchCard({ match, onDelete, champions, canWrite }) {
     <article className={"match-card " + (isExpanded ? "expanded" : "collapsed")}>
       {isExpanded && <div className={"match-card-top " + (canWrite ? "can-write" : "guest")}>
         <span>{match.date}</span>
+        <span className={"match-type-badge " + (match.matchType === "spin" ? "spin" : "manual")}>{match.matchType === "spin" ? "Spin wheel" : "Manual"}</span>
         <span>{match.notes || "Custom game"}</span>
         <span className={"match-winner " + match.winner}>{match.winner} victory</span>
         {canWrite && <button

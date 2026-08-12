@@ -155,7 +155,7 @@ function App() {
 
   function useSpunTeams(teams) {
     setIsSpinModalOpen(false);
-    openMatchForm(teams);
+    openMatchForm({ ...teams, matchType: "spin" });
   }
 
   if (isAuthLoading) return <div className="auth-loading">Loading...</div>;
@@ -163,6 +163,7 @@ function App() {
   return (
     <div className="shell">
       <AppHeader
+        onOpenDashboard={() => setView("dashboard")}
         onOpenPlayers={async () => { await loadDatabaseData(); setView("players"); }}
         onOpenLeaderboard={() => setView("leaderboard")}
         playerSearch={playerSearch}

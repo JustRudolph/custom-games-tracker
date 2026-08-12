@@ -27,6 +27,17 @@ CREATE TABLE admin_sessions (
   CONSTRAINT fk_admin_sessions_admin FOREIGN KEY (admin_id) REFERENCES admin_accounts (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE auth_login_attempts (
+  attempt_key CHAR(64) NOT NULL,
+  failures TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  window_started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  blocked_until DATETIME NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (attempt_key),
+  KEY idx_login_attempts_updated (updated_at),
+  KEY idx_login_attempts_blocked (blocked_until)
+) ENGINE=InnoDB;
+
 CREATE TABLE players (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, 
   summoner_name VARCHAR(100) NOT NULL,
@@ -65,11 +76,13 @@ CREATE TABLE matches (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, 
   played_at DATETIME NOT NULL, 
   winner_team ENUM('blue', 'red') NOT NULL, 
+  match_type ENUM('manual', 'spin') NOT NULL DEFAULT 'manual',
   notes TEXT NULL, created_by BIGINT UNSIGNED NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id), 
   KEY idx_matches_played_at (played_at), 
+  KEY idx_matches_type (match_type),
   KEY idx_matches_created_by (created_by),
   CONSTRAINT fk_matches_created_by FOREIGN KEY (created_by) REFERENCES admin_accounts (id) ON DELETE SET NULL
 ) ENGINE=InnoDB;

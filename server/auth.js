@@ -14,6 +14,7 @@ export async function verifyPassword(password, storedHash) {
   const [algorithm, salt, encodedHash] = String(storedHash).split("$");
   if (algorithm !== "scrypt" || !salt || !encodedHash) return false;
   const expected = Buffer.from(encodedHash, "hex");
+  if (expected.length !== 64) return false;
   const actual = await scrypt(password, salt, expected.length);
   return timingSafeEqual(expected, actual);
 }
@@ -29,15 +30,18 @@ export function hashToken(token) {
 
 export function getSessionToken(request) {
   const cookie = request.headers.cookie || "";
-  return cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("customs_session="))?.slice("customs_session=".length) || "";
+  const cookieName = process.env.NODE_ENV === "production" ? "__Host-customs_session" : "customs_session";
+  return cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(cookieName + "="))?.slice(cookieName.length + 1) || "";
 }
 
 export function sessionCookie(token, expiresAt) {
+  const cookieName = process.env.NODE_ENV === "production" ? "__Host-customs_session" : "customs_session";
   const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
-  return "customs_session=" + token + "; HttpOnly; Path=/; SameSite=Lax; Expires=" + expiresAt.toUTCString() + secure;
+  return cookieName + "=" + token + "; HttpOnly; Path=/; SameSite=Strict; Expires=" + expiresAt.toUTCString() + secure;
 }
 
 export function clearSessionCookie() {
+  const cookieName = process.env.NODE_ENV === "production" ? "__Host-customs_session" : "customs_session";
   const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
-  return "customs_session=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0" + secure;
+  return cookieName + "=; HttpOnly; Path=/; SameSite=Strict; Max-Age=0" + secure;
 }
