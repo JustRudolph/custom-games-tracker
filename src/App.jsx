@@ -8,7 +8,9 @@ import LoginPage from "./components/LoginPage.jsx";
 import PlayerInsights from "./components/PlayerInsights.jsx";
 import PlayerDashboard from "./components/PlayerDashboard.jsx";
 import PlayerLookup from "./components/PlayerLookup.jsx";
+import ProfileSettingsModal from "./components/ProfileSettingsModal.jsx";
 import SummaryStats from "./components/SummaryStats.jsx";
+import SpinCustomModal from "./components/SpinCustomModal.jsx";
 import { api } from "./api.js";
 import { fetchChampionCatalog, getPlayerName, getPlayerStats, rankPlayers } from "./utils/matches.js";
 
@@ -16,15 +18,19 @@ function App() {
   const [matches, setMatches] = useState([]);
   const [admin, setAdmin] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [search, setSearch] = useState("");
   const [playerSearch, setPlayerSearch] = useState("");
+  const [selectedPlayerName, setSelectedPlayerName] = useState("");
   const [view, setView] = useState("dashboard");
   const [isMatchModalOpen, setIsMatchModalOpen] = useState(false);
+  const [isSpinModalOpen, setIsSpinModalOpen] = useState(false);
+  const [spunTeams, setSpunTeams] = useState(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
   const [players, setPlayers] = useState([]);
   const [dataError, setDataError] = useState("");
   const [dataDragonChampions, setDataDragonChampions] = useState([]);
   const [isChampionLibraryLoading, setIsChampionLibraryLoading] = useState(true);
+  const [championLibraryError, setChampionLibraryError] = useState("");
   const [theme, setTheme] = useState(
     () => localStorage.getItem("customs-ledger-theme") || "light",
   );
@@ -56,8 +62,8 @@ function App() {
   useEffect(() => {
     let isCurrent = true;
     fetchChampionCatalog()
-      .then((champions) => isCurrent && setDataDragonChampions(champions))
-      .catch(() => {})
+      .then((champions) => { if (isCurrent) { setDataDragonChampions(champions); setChampionLibraryError(""); } })
+      .catch((error) => isCurrent && setChampionLibraryError(error.message || "Could not load champions."))
       .finally(() => isCurrent && setIsChampionLibraryLoading(false));
     return () => { isCurrent = false; };
   }, []);
@@ -106,11 +112,9 @@ function App() {
     setPlayers((current) => current.filter((player) => player.id !== id));
   }
 
-  async function clearMatches() {
-    if (matches.length && confirm("Delete every logged match?")) {
-      await api.deleteMatches(matches.map((match) => match.id));
-      setMatches([]);
-    }
+  async function updateProfile(profile) {
+    const updatedAdmin = await api.updateProfile(profile);
+    setAdmin(updatedAdmin);
   }
 
   function exportMatches() {
@@ -128,10 +132,30 @@ function App() {
   const toggleTheme = () => setTheme((current) => (current === "light" ? "dark" : "light"));
   const canWrite = admin?.role === "owner" || admin?.role === "admin";
 
-  function searchPlayers(value) {
-    setPlayerSearch(value);
-    if (value.trim()) setView("players");
-    else if (!canWrite && view === "players") setView("dashboard");
+  const playerSearchResults = useMemo(() => {
+    const query = playerSearch.trim().toLowerCase();
+    return query ? rankedPlayers.filter(([name]) => name.toLowerCase().includes(query)).slice(0, 6) : [];
+  }, [playerSearch, rankedPlayers]);
+
+  function selectSearchedPlayer(name) {
+    setPlayerSearch(name);
+    setSelectedPlayerName(name);
+    setView("playerLookup");
+  }
+
+  function openMatchForm(initialTeams = null) {
+    setSpunTeams(initialTeams);
+    setIsMatchModalOpen(true);
+  }
+
+  function closeMatchForm() {
+    setIsMatchModalOpen(false);
+    setSpunTeams(null);
+  }
+
+  function useSpunTeams(teams) {
+    setIsSpinModalOpen(false);
+    openMatchForm(teams);
   }
 
   if (isAuthLoading) return <div className="auth-loading">Loading...</div>;
@@ -139,24 +163,24 @@ function App() {
   return (
     <div className="shell">
       <AppHeader
-        hasMatches={matches.length > 0}
-        onClearMatches={clearMatches}
         onOpenPlayers={async () => { await loadDatabaseData(); setView("players"); }}
+        onOpenLeaderboard={() => setView("leaderboard")}
         playerSearch={playerSearch}
-        onPlayerSearch={searchPlayers}
+        onPlayerSearch={setPlayerSearch}
+        playerSearchResults={playerSearchResults}
+        onSelectPlayer={selectSearchedPlayer}
         admin={admin}
         canWrite={canWrite}
         onLogin={() => setIsLoginOpen(true)}
         onLogout={logout}
+        onOpenProfileSettings={() => setIsProfileSettingsOpen(true)}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
-      {view === "players" ? (
-        canWrite ? (
-          <PlayerDashboard players={players} dataError={dataError} canWrite={canWrite} onRetry={loadDatabaseData} onSavePlayer={savePlayer} onDeletePlayer={deletePlayer} onBack={() => setView("dashboard")} />
-        ) : (
-          <PlayerLookup players={rankedPlayers} matches={matches} champions={dataDragonChampions} query={playerSearch} onQueryChange={searchPlayers} dataError={dataError} onRetry={loadDatabaseData} onBack={() => setView("dashboard")} />
-        )
+      {view === "players" && canWrite ? (
+        <PlayerDashboard players={players} dataError={dataError} canWrite={canWrite} onRetry={loadDatabaseData} onSavePlayer={savePlayer} onDeletePlayer={deletePlayer} onBack={() => setView("dashboard")} />
+      ) : view === "playerLookup" ? (
+        <PlayerLookup players={rankedPlayers} matches={matches} champions={dataDragonChampions} selectedName={selectedPlayerName} dataError={dataError} onRetry={loadDatabaseData} onBack={() => setView("dashboard")} />
       ) : view === "leaderboard" ? (
         <FullLeaderboard
           players={rankedPlayers}
@@ -174,17 +198,18 @@ function App() {
           {canWrite && <div className="dashboard-actions">
             <button
               className="primary-btn log-custom-button"
-              onClick={() => setIsMatchModalOpen(true)}
+              onClick={() => openMatchForm()}
             >
               Log a custom <span>-&gt;</span>
+            </button>
+            <button className="secondary-btn spin-custom-button" onClick={() => setIsSpinModalOpen(true)}>
+              Spin a custom
             </button>
           </div>}
           <section className="dashboard-layout">
             <section className="workspace">
               <MatchHistory
                 matches={matches}
-                search={search}
-                onSearchChange={setSearch}
                 onDeleteMatch={deleteMatch}
                 onExport={exportMatches}
                 champions={dataDragonChampions}
@@ -199,16 +224,20 @@ function App() {
           {isMatchModalOpen && (
             <MatchForm
               onAddMatch={addMatch}
-              onClose={() => setIsMatchModalOpen(false)}
+              onClose={closeMatchForm}
               playerNames={playerNames}
               champions={dataDragonChampions}
               isChampionLibraryLoading={isChampionLibraryLoading}
+              championLibraryError={championLibraryError}
               savedPlayers={players}
+              initialTeams={spunTeams}
             />
           )}
         </main>
       )}
       {isLoginOpen && <LoginPage onLogin={login} onClose={() => setIsLoginOpen(false)} />}
+      {isProfileSettingsOpen && admin && <ProfileSettingsModal admin={admin} onSave={updateProfile} onClose={() => setIsProfileSettingsOpen(false)} />}
+      {isSpinModalOpen && <SpinCustomModal playerNames={players.filter((player) => player.active).map((player) => player.name)} onClose={() => setIsSpinModalOpen(false)} onUseTeams={useSpunTeams} />}
       <footer></footer>
     </div>
   );

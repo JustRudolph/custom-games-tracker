@@ -1,6 +1,13 @@
 export const STORAGE_KEY = "customs-ledger-v1";
 
-export const today = () => new Date().toISOString().slice(0, 10);
+export const today = () => {
+  const date = new Date();
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+};
 export const ROLES = ["Top", "Jungle", "Middle", "Bottom", "Support"];
 export const RANKS = [
   { value: 1, label: "Iron" },
@@ -29,6 +36,15 @@ export async function fetchChampionCatalog() {
 
   const { data } = await championsResponse.json();
   return Object.values(data)
+    .filter((champion) =>
+      ![champion.id, champion.name, champion.image?.full]
+        .some((value) => String(value || "").toLowerCase().includes("classic")),
+    )
+    .filter((champion, index, champions) =>
+      champions.findIndex(
+        (candidate) => candidate.name.toLowerCase() === champion.name.toLowerCase(),
+      ) === index,
+    )
     .map((champion) => ({
       id: champion.id,
       name: champion.name,
@@ -68,7 +84,9 @@ export function splitPlayerNames(value) {
 export function getPlayerStats(matches) {
   const stats = matches.reduce((result, match) => {
     ["blue", "red"].forEach((team) => match[team].forEach((player) => {
-      const name = getPlayerName(player);
+      const name = String(getPlayerName(player) || "").trim();
+      if (!name) return;
+      const normalizedName = name.toLowerCase();
       const details = getPlayerLabel(player);
       const [kills, deaths, assists] = details.kda && details.kda !== "-"
         ? details.kda.split("/").map(Number)
@@ -76,23 +94,24 @@ export function getPlayerStats(matches) {
       const champion = details.champion && details.champion !== "Unknown" ? details.champion : null;
       const won = match.winner === team;
 
-      result[name] ??= { wins: 0, games: 0, kills: 0, deaths: 0, assists: 0, champions: {}, roles: {} };
-      result[name].games += 1;
-      result[name].wins += won ? 1 : 0;
-      result[name].kills += Number.isFinite(kills) ? kills : 0;
-      result[name].deaths += Number.isFinite(deaths) ? deaths : 0;
-      result[name].assists += Number.isFinite(assists) ? assists : 0;
+      result[normalizedName] ??= { displayName: name, wins: 0, games: 0, kills: 0, deaths: 0, assists: 0, champions: {}, roles: {} };
+      const stat = result[normalizedName];
+      stat.games += 1;
+      stat.wins += won ? 1 : 0;
+      stat.kills += Number.isFinite(kills) ? kills : 0;
+      stat.deaths += Number.isFinite(deaths) ? deaths : 0;
+      stat.assists += Number.isFinite(assists) ? assists : 0;
 
       if (champion) {
-        result[name].champions[champion] ??= { games: 0, wins: 0 };
-        result[name].champions[champion].games += 1;
-        result[name].champions[champion].wins += won ? 1 : 0;
+        stat.champions[champion] ??= { games: 0, wins: 0 };
+        stat.champions[champion].games += 1;
+        stat.champions[champion].wins += won ? 1 : 0;
       }
 
       if (details.role) {
-        result[name].roles[details.role] ??= { games: 0, wins: 0 };
-        result[name].roles[details.role].games += 1;
-        result[name].roles[details.role].wins += won ? 1 : 0;
+        stat.roles[details.role] ??= { games: 0, wins: 0 };
+        stat.roles[details.role].games += 1;
+        stat.roles[details.role].wins += won ? 1 : 0;
       }
     }));
 
@@ -109,7 +128,9 @@ export function getPlayerStats(matches) {
     )[0]?.[0] || "-";
   });
 
-  return stats;
+  return Object.fromEntries(
+    Object.values(stats).map((stat) => [stat.displayName, stat]),
+  );
 }
 
 export function rankPlayers(stats) {

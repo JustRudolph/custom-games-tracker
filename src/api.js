@@ -14,6 +14,7 @@ async function request(path, options) {
 export const api = {
   login: (credentials) => request("/auth/login", { method: "POST", body: JSON.stringify(credentials) }),
   getCurrentAdmin: () => request("/auth/me"),
+  updateProfile: (profile) => request("/auth/profile", { method: "PATCH", body: JSON.stringify(profile) }),
   logout: () => request("/auth/logout", { method: "POST" }),
   getPlayers: () => request("/players"),
   createPlayer: (player) => request("/players", { method: "POST", body: JSON.stringify(player) }),
@@ -22,5 +23,4 @@ export const api = {
   getMatches: () => request("/matches"),
   createMatch: (match) => request("/matches", { method: "POST", body: JSON.stringify(match) }),
   deleteMatch: (id) => request("/matches/" + id, { method: "DELETE" }),
-  deleteMatches: (ids) => Promise.all(ids.map((id) => request("/matches/" + id, { method: "DELETE" }))),
 };

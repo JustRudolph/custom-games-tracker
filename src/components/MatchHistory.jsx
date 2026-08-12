@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getPlayerLabel, getPlayerName } from "../utils/matches.js";
 import RoleIcon from "./RoleIcon.jsx";
+import ConfirmationModal from "./ConfirmationModal.jsx";
 
 function PlayerLine({ player, team, champions }) {
   const details = getPlayerLabel(player);
@@ -81,21 +82,15 @@ function MatchCard({ match, onDelete, champions, canWrite }) {
 
 export default function MatchHistory({
   matches,
-  search,
-  onSearchChange,
   onDeleteMatch,
   onExport,
   champions,
   canWrite,
 }) {
-  const visibleMatches = matches.filter((match) =>
-    [...match.blue, ...match.red]
-      .map(getPlayerName)
-      .join(" ")
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
-
+  const [matchPendingDelete, setMatchPendingDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  async function deleteMatch() { if (!matchPendingDelete || isDeleting) return; setDeleteError(""); setIsDeleting(true); try { await onDeleteMatch(matchPendingDelete); setMatchPendingDelete(null); } catch (error) { setDeleteError(error.message || "Could not delete match."); } finally { setIsDeleting(false); } }
   return (
     <div className="panel history-panel">
       <div className="panel-head history-head">
@@ -103,37 +98,28 @@ export default function MatchHistory({
           <p className="eyebrow">MATCH ARCHIVE</p>
           <h2>Match history</h2>
         </div>
-        <div className="history-tools">
-          <input
-            type="search"
-            placeholder="Search player..."
-            value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
-          />
+        {canWrite && <div className="history-tools">
           <button onClick={onExport} className="ghost-btn">
             Export JSON
           </button>
-        </div>
+        </div>}
       </div>
       <div className="history">
-        {visibleMatches.length ? (
-          visibleMatches.map((match, index) => (
+        {matches.length ? (
+          matches.map((match, index) => (
             <MatchCard
               key={match.id || index}
               match={match}
-              onDelete={onDeleteMatch}
+              onDelete={(match) => { setDeleteError(""); setMatchPendingDelete(match); }}
               champions={champions}
               canWrite={canWrite}
             />
           ))
         ) : (
-          <div className="empty">
-            No matches found.
-            <br />
-            Use the form to add your first custom.
-          </div>
+          <div className="empty">{canWrite ? "No matches have been logged yet. Log your first custom when you're ready." : "No matches have been logged yet."}</div>
         )}
       </div>
+      {matchPendingDelete && <ConfirmationModal eyebrow="DELETE MATCH" title={`Delete match from ${matchPendingDelete.date}?`} message="This removes the match and its player statistics permanently." confirmLabel="Delete match" isWorking={isDeleting} error={deleteError} onCancel={() => setMatchPendingDelete(null)} onConfirm={deleteMatch} />}
     </div>
   );
 }

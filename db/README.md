@@ -27,7 +27,7 @@ PowerShell setup:
 
 The schema is independent from Riot services. A match stores its two teams, each team stores its players, and each player entry can record one of the five roles (Top, Jungle, Middle, Bottom, Support), champion, rank at the time of the match, and K/D/A. `players` and `champions` are reusable reference tables, while `admin_accounts` is ready for authenticated administration.
 
-Do not store plaintext passwords. Create admin accounts with an Argon2id or bcrypt hash in `password_hash`, and enforce authentication in the API layer before exposing write operations.
+Do not store plaintext passwords. Create admin accounts with `npm.cmd run admin:create`; the server stores passwords as scrypt hashes and enforces authentication before exposing write operations.
 
 Existing browser data is not automatically copied into MySQL yet. The next backend step is an authenticated API that maps the current local match shape to `matches`, `match_teams`, and `match_players`.
 
