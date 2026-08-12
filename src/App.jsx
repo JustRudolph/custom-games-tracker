@@ -70,9 +70,6 @@ function App() {
 
   const playerStats = useMemo(() => getPlayerStats(matches), [matches]);
   const rankedPlayers = useMemo(() => rankPlayers(playerStats), [playerStats]);
-  const currentPlayer = rankedPlayers.find(
-    ([name]) => name.toLowerCase() === "me",
-  );
   const topPlayer = [...rankedPlayers].sort(
     ([, first], [, second]) =>
       second.wins / second.games - first.wins / first.games,
@@ -193,7 +190,6 @@ function App() {
           <Hero />
           <SummaryStats
             matches={matches}
-            currentPlayer={currentPlayer}
             topPlayer={topPlayer}
           />
           {canWrite && <div className="dashboard-actions">

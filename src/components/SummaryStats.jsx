@@ -1,7 +1,25 @@
 import { getWinRate } from "../utils/matches.js";
 
-export default function SummaryStats({ matches, currentPlayer, topPlayer }) {
+export default function SummaryStats({ matches, topPlayer }) {
   const latestMatch = matches[0];
+  const latestWinner =
+    latestMatch?.winner === "blue"
+      ? "Blue team"
+      : latestMatch?.winner === "red"
+        ? "Red team"
+        : "-";
+  const latestType =
+    latestMatch?.matchType === "spin"
+      ? "Spin wheel custom"
+      : "Manual custom";
+  const latestDate = latestMatch?.date
+    ? new Intl.DateTimeFormat(undefined, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        timeZone: "UTC",
+      }).format(new Date(`${latestMatch.date}T00:00:00Z`))
+    : "";
 
   return (
     <section className="stats">
@@ -10,25 +28,31 @@ export default function SummaryStats({ matches, currentPlayer, topPlayer }) {
         <strong>{matches.length}</strong>
         <span className="sub">all recorded matches</span>
       </div>
-      <div className="stat-card">
-        <span className="label">YOUR WINRATE</span>
-        <strong>
-          {currentPlayer ? `${getWinRate(currentPlayer[1])}%` : "-"}
-        </strong>
-        <span className="sub">
-          {currentPlayer
-            ? `${currentPlayer[1].wins}W - ${currentPlayer[1].games - currentPlayer[1].wins}L`
-            : 'name yourself "Me" to track'}
-        </span>
-      </div>
-      <div className="stat-card">
+      <div
+        className={
+          "stat-card latest-result-card " +
+          (latestMatch ? `has-result winner-${latestMatch.winner}` : "empty-result")
+        }
+      >
         <span className="label">LATEST RESULT</span>
-        <strong>
-          {latestMatch ? `${latestMatch.winner[0].toUpperCase()} win` : "-"}
-        </strong>
-        <span className="sub">
-          {latestMatch ? `${latestMatch.winner} team` : "no games yet"}
-        </span>
+        {latestMatch ? (
+          <>
+            <strong className={"latest-result-team " + latestMatch.winner}>
+              <span className="latest-result-dot" aria-hidden="true" />
+              {latestWinner} victory
+            </strong>
+            <span className="sub latest-result-meta">
+              <span>{latestDate}</span>
+              <i aria-hidden="true" />
+              <span>{latestType}</span>
+            </span>
+          </>
+        ) : (
+          <>
+            <strong>-</strong>
+            <span className="sub">no games yet</span>
+          </>
+        )}
       </div>
       <div className="stat-card">
         <span className="label">TOP PLAYER</span>
