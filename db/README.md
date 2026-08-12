@@ -47,7 +47,7 @@ Player deletion is supported. Historical match rows preserve `player_name`, role
 
 Build with `npm.cmd run build`, set `NODE_ENV=production`, and run `npm.cmd start`. In production, the API serves `dist` so the frontend and API share one origin. Set `CLIENT_ORIGIN` to that exact public HTTPS origin.
 
-Use a dedicated MySQL user with only the required privileges. Keep MySQL on a private network. When `DB_HOST` is not localhost, production startup requires `DB_SSL=true`; provide the hosting provider's CA certificate through `DB_SSL_CA` when required.
+Use a dedicated MySQL user with only the required privileges. Keep MySQL on a private network. Railway private hosts ending in `.railway.internal` may use `DB_SSL=false`. Public database hosts require `DB_SSL=true`; provide the hosting provider's CA certificate through `DB_SSL_CA` when required.
 
 Set `TRUST_PROXY` to the exact number of trusted reverse proxies between visitors and Node. Leave it at `0` when Node receives connections directly. Incorrect proxy settings make IP-based throttling unreliable.
 

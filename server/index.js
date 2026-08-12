@@ -16,11 +16,14 @@ const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 const trustProxy = Number(process.env.TRUST_PROXY || 0);
 const dummyPasswordHash = "scrypt$0123456789abcdef0123456789abcdef$693614e72597f21adf75adf1f99bba137e396f41c5af83d232841071e83862e5d16e5c116d867fec9d069120328590be45014c5c926d8796a7e6022b4ab9c67c";
 const apiWindows = new Map();
+const databaseHost = String(process.env.DB_HOST || "").toLowerCase();
+const isPrivateDatabaseHost = ["127.0.0.1", "localhost", "::1"].includes(databaseHost)
+  || databaseHost.endsWith(".railway.internal");
 
 if (isProduction) {
   if (!clientOrigin.startsWith("https://")) throw new Error("CLIENT_ORIGIN must use HTTPS in production.");
   if (!process.env.DB_PASSWORD || process.env.DB_PASSWORD === "change_me") throw new Error("Set a non-placeholder DB_PASSWORD in production.");
-  if (!["127.0.0.1", "localhost", "::1"].includes(process.env.DB_HOST) && process.env.DB_SSL !== "true") throw new Error("Set DB_SSL=true for a remote production database.");
+  if (!isPrivateDatabaseHost && process.env.DB_SSL !== "true") throw new Error("Set DB_SSL=true for a public production database.");
 }
 if (!Number.isInteger(trustProxy) || trustProxy < 0 || trustProxy > 5) throw new Error("TRUST_PROXY must be an integer from 0 to 5.");
 if (trustProxy) app.set("trust proxy", trustProxy);
