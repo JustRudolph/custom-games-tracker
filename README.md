@@ -8,11 +8,6 @@ A React and Express application for manually recording League of Legends custom 
 - MySQL Server 8.0.16 or newer
 - Git
 
-The commands below are written for Windows PowerShell and assume the repository is located at:
-
-```text
-C:\Users\Daniello\Desktop\customgames
-```
 
 ## Start an existing installation
 
@@ -41,7 +36,6 @@ Keep the PowerShell window open while using the app. Press `Ctrl+C` to stop both
 ### 1. Install dependencies
 
 ```powershell
-cd C:\Users\Daniello\Desktop\customgames
 npm.cmd install
 ```
 
