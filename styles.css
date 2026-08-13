@@ -470,7 +470,7 @@ textarea {
 .champion-library-grid img { width: 58px; height: 58px; border-radius: 4px; object-fit: cover; }
 .champion-library-grid span { width: 100%; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .champion-library-empty { grid-column: 1 / -1; padding: 50px 20px; color: var(--muted); text-align: center; }
-.spin-custom-modal { width: min(100%, 980px); max-height: calc(100vh - 48px); overflow-y: auto; padding: 28px; box-shadow: 0 24px 80px rgb(0 0 0 / 42%); }
+.spin-custom-modal { width: min(100%, 1180px); max-height: calc(100vh - 36px); overflow-y: auto; padding: 36px; box-shadow: 0 24px 80px rgb(0 0 0 / 42%); }
 .spin-player-selection { width: min(100%, 620px); margin: 0 auto; }
 .spin-selection-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .spin-selection-head span { color: var(--muted); font: 12px "DM Mono"; }
@@ -484,33 +484,33 @@ textarea {
 .spin-selected-players button span { color: var(--muted); }
 .spin-start-button { width: 100%; }
 .spin-start-button:disabled, .spin-wheel-button:disabled { cursor: not-allowed; opacity: .48; }
-.spin-custom-layout { display: grid; grid-template-columns: minmax(250px, 330px) minmax(0, 1fr); gap: 24px; }
-.spin-rosters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
+.spin-custom-layout { display: grid; grid-template-columns: minmax(360px, 430px) minmax(0, 1fr); gap: 32px; }
+.spin-rosters { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-content: start; }
 .spin-team-roster { min-width: 0; border: 1px solid var(--line); }
-.spin-team-roster h3 { margin: 0; padding: 12px; border-bottom: 1px solid var(--line); background: var(--soft); font-size: 15px; }
-.spin-team-player { display: grid; gap: 5px; min-height: 58px; padding: 9px 11px; border-top: 1px solid var(--line); }
+.spin-team-roster h3 { margin: 0; padding: 15px; border-bottom: 1px solid var(--line); background: var(--soft); font-size: 17px; }
+.spin-team-player { display: grid; gap: 6px; min-height: 68px; padding: 12px 14px; border-top: 1px solid var(--line); }
 .spin-team-player:first-of-type { border-top: 0; }
 .spin-team-player strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
 .spin-team-player > span { display: flex; gap: 5px; align-items: center; color: var(--muted); font-size: 12px; }
 .spin-team-player .role-icon { width: 18px; height: 18px; }
 .spin-team-player .role-icon img { width: 17px; height: 17px; }
 .spin-team-empty { padding: 30px 10px; color: var(--muted); text-align: center; font-size: 12px; }
-.spin-stage { display: grid; justify-items: center; align-content: start; min-width: 0; padding: 22px; border: 1px solid var(--line); background: var(--soft); }
+.spin-stage { display: grid; justify-items: center; align-content: start; min-width: 0; padding: 30px; border: 1px solid var(--line); background: var(--soft); }
 .spin-stage-head { width: 100%; margin-bottom: 14px; text-align: center; }
 .spin-stage-head .eyebrow { margin-bottom: 7px; }
-.spin-stage-head h3, .spin-complete h3 { margin: 0 0 5px; font-size: 22px; }
+.spin-stage-head h3, .spin-complete h3 { margin: 0 0 5px; font-size: 26px; }
 .spin-stage-head > span { color: var(--muted); font: 12px "DM Mono"; }
 .spin-stage > label { width: min(100%, 300px); margin-bottom: 16px; }
 .spin-stage select { width: 100%; min-height: 46px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 2px; outline: none; background: var(--input); color: var(--ink); font: 15px "Segoe UI"; }
-.spin-wheel-control { position: relative; display: grid; justify-items: center; width: 260px; padding-top: 8px; }
+.spin-wheel-control { --wheel-label-radius: 116px; --wheel-role-label-radius: 84px; position: relative; display: grid; justify-items: center; width: 326px; padding-top: 8px; }
 .spin-wheel-pointer { position: absolute; z-index: 2; top: 0; left: 50%; width: 0; height: 0; border-right: 12px solid transparent; border-left: 12px solid transparent; border-top: 23px solid var(--ink); filter: drop-shadow(0 2px 1px rgb(0 0 0 / 20%)); transform: translateX(-50%); transform-origin: 50% 0; }
-.spin-wheel { position: relative; width: 240px; height: 240px; overflow: hidden; border: 6px solid var(--white); border-radius: 50%; box-shadow: 0 0 0 1px var(--line), 0 10px 28px rgb(0 0 0 / 18%); transition: transform var(--spin-duration, 4.2s) cubic-bezier(.08, .68, .08, 1); }
+.spin-wheel { position: relative; width: 300px; height: 300px; overflow: hidden; border: 7px solid var(--white); border-radius: 50%; box-shadow: 0 0 0 1px var(--line), 0 10px 28px rgb(0 0 0 / 18%); transition: transform var(--spin-duration, 4.2s) cubic-bezier(.08, .68, .08, 1); }
 .spin-wheel::after { position: absolute; inset: 50%; width: 30px; height: 30px; border: 5px solid var(--white); border-radius: 50%; background: var(--ink); content: ""; transform: translate(-50%, -50%); }
-.spin-wheel-label { position: absolute; top: 50%; left: 50%; width: 84px; margin: -8px 0 0 -42px; overflow: hidden; color: #fff; font-size: 11px; font-weight: 700; text-align: center; text-overflow: ellipsis; text-shadow: 0 1px 3px rgb(0 0 0 / 65%); transition: transform var(--spin-duration, 4.2s) cubic-bezier(.08, .68, .08, 1); white-space: nowrap; }
-.spin-wheel-label.custom-option { width: 90px; margin: -22px 0 0 -45px; overflow: visible; }
+.spin-wheel-label { position: absolute; top: 50%; left: 50%; width: 104px; margin: -9px 0 0 -52px; overflow: hidden; color: #fff; font-size: 13px; font-weight: 700; text-align: center; text-overflow: ellipsis; text-shadow: 0 1px 3px rgb(0 0 0 / 65%); transition: transform var(--spin-duration, 4.2s) cubic-bezier(.08, .68, .08, 1); white-space: nowrap; }
+.spin-wheel-label.custom-option { width: 100px; margin: -24px 0 0 -50px; overflow: visible; }
 .spin-role-option { display: grid; gap: 2px; justify-items: center; }
-.spin-wheel-label .role-icon { width: 28px; height: 28px; }
-.spin-wheel-label .role-icon img { width: 27px; height: 27px; filter: brightness(0) invert(1) drop-shadow(0 1px 2px rgb(0 0 0 / 55%)); }
+.spin-wheel-label .role-icon { width: 32px; height: 32px; }
+.spin-wheel-label .role-icon img { width: 31px; height: 31px; filter: brightness(0) invert(1) drop-shadow(0 1px 2px rgb(0 0 0 / 55%)); }
 .spin-role-option > span:last-child { font-size: 10px; line-height: 1; }
 .spin-wheel-result { min-height: 24px; margin-top: 14px; color: var(--ink); font-size: 17px; font-weight: 700; text-align: center; }
 .spin-wheel-control.is-spinning .spin-wheel { box-shadow: 0 0 0 1px var(--line), 0 13px 34px rgb(0 0 0 / 24%); }
@@ -1131,7 +1131,7 @@ footer {
   .spin-custom-layout { grid-template-columns: 1fr; }
   .spin-rosters { order: 2; }
   .spin-stage { padding: 16px 8px; }
-  .spin-wheel-control { width: 236px; }
+  .spin-wheel-control { --wheel-label-radius: 84px; --wheel-role-label-radius: 62px; width: 236px; }
   .spin-wheel { width: 220px; height: 220px; }
   .spin-wheel-label { transform-origin: center; }
   .modal-panel {
@@ -1244,7 +1244,7 @@ footer {
   .champion-library-modal { padding: 12px; }
   .champion-library-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .spin-rosters { grid-template-columns: 1fr; }
-  .spin-wheel-control { width: 216px; }
+  .spin-wheel-control { --wheel-label-radius: 76px; --wheel-role-label-radius: 56px; width: 216px; }
   .spin-wheel { width: 200px; height: 200px; }
   .spin-wheel-label.custom-option { width: 76px; margin-left: -38px; }
   .full-leaderboard-head { align-items: flex-start; gap: 14px; flex-direction: column; }

@@ -95,12 +95,11 @@ export default function SpinWheel({ options, buttonLabel, resultButtonLabel = "C
       >
         {displayOptions.map((option, index) => {
           const angle = (index + 0.5) * (360 / displayOptions.length);
-          const labelRadius = renderOption ? 66 : 92;
           return (
             <span
               className={"spin-wheel-label " + (renderOption ? "custom-option" : "")}
               key={option}
-              style={{ transform: `rotate(${angle}deg) translateY(-${labelRadius}px) rotate(${-angle - rotation}deg)`, "--spin-duration": `${spinDuration}ms` }}
+              style={{ transform: `rotate(${angle}deg) translateY(calc(-1 * var(${renderOption ? "--wheel-role-label-radius" : "--wheel-label-radius"}))) rotate(${-angle - rotation}deg)`, "--spin-duration": `${spinDuration}ms` }}
             >
               {renderOption ? renderOption(option) : option}
             </span>
