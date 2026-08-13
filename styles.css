@@ -960,6 +960,11 @@ footer {
 .player-stat-grid strong { overflow: hidden; font-size: 17px; text-overflow: ellipsis; white-space: nowrap; }
 .player-stat-champion, .player-stat-role { display: flex; gap: 9px; align-items: center; }
 .player-stat-champion img { width: 28px; height: 28px; flex: 0 0 auto; border-radius: 2px; object-fit: cover; }
+.player-best-performance { display: grid; gap: 12px; padding: 20px 0; border-bottom: 1px solid var(--line); }
+.player-best-performance > span { color: var(--muted); font: 700 12px "Segoe UI", Arial, sans-serif; text-transform: uppercase; }
+.player-best-performance-details { display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, .7fr) auto; gap: 18px; align-items: center; }
+.player-best-performance-details strong { min-width: 0; font-size: 17px; }
+.player-best-performance-kda { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .player-stat-card > .bar { margin-top: 22px; }
 .player-match-list { margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--line); }
 .player-match-list-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -1155,6 +1160,7 @@ footer {
   .player-stat-winrate { font-size: 34px; }
   .player-stat-grid { grid-template-columns: 1fr; }
   .player-stat-grid > div:nth-child(odd), .player-stat-grid > div:nth-child(even) { padding: 16px 0; border-right: 0; }
+  .player-best-performance-details { grid-template-columns: 1fr; gap: 10px; }
   .player-match-row { grid-template-columns: 44px minmax(90px, 1fr) 26px 58px; gap: 7px; padding: 9px; }
   .player-match-date { display: none; }
   .player-admin-layout { grid-template-columns: 1fr; }

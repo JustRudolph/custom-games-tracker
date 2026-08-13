@@ -1,7 +1,7 @@
 import { getAverageKda, getWinRate } from "../utils/matches.js";
 import RoleIcon from "./RoleIcon.jsx";
 
-export default function PlayerStatCard({ name, stat, champion, children }) {
+export default function PlayerStatCard({ name, stat, champion, bestPerformance, bestPerformanceChampion, children }) {
   const winRate = getWinRate(stat);
 
   return (
@@ -40,6 +40,22 @@ export default function PlayerStatCard({ name, stat, champion, children }) {
           </strong>
         </div>
       </div>
+      {bestPerformance && (
+        <section className="player-best-performance">
+          <span>Best performance</span>
+          <div className="player-best-performance-details">
+            <strong className="player-stat-champion">
+              {bestPerformanceChampion && <img src={bestPerformanceChampion.icon} alt="" />}
+              {bestPerformance.champion}
+            </strong>
+            <strong className="player-stat-role">
+              <RoleIcon role={bestPerformance.role} />
+              {bestPerformance.role}
+            </strong>
+            <strong className="player-best-performance-kda">{bestPerformance.kda} KDA</strong>
+          </div>
+        </section>
+      )}
       <div className="bar">
         <i style={{ width: winRate + "%" }} />
       </div>

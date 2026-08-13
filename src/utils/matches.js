@@ -75,6 +75,49 @@ export function getPlayerLabel(player) {
     : player;
 }
 
+function getPlayerKdaNumbers(player) {
+  const details = getPlayerLabel(player);
+  const values = details.kda && details.kda !== "-"
+    ? details.kda.split("/").map(Number)
+    : [Number(details.kills || 0), Number(details.deaths || 0), Number(details.assists || 0)];
+
+  return values.map((value) => Number.isFinite(value) ? value : 0);
+}
+
+export function getPlayerBestPerformance(matches, playerName) {
+  const normalizedName = playerName.trim().toLowerCase();
+  let bestPerformance = null;
+
+  matches.filter((match) => match.status === "complete").forEach((match) => {
+    for (const team of ["blue", "red"]) {
+      const player = match[team].find((entry) => getPlayerName(entry).trim().toLowerCase() === normalizedName);
+      if (!player) continue;
+
+      const details = getPlayerLabel(player);
+      const [kills, deaths, assists] = getPlayerKdaNumbers(details);
+      const performance = {
+        champion: details.champion || "Unknown",
+        role: details.role || "-",
+        kills,
+        deaths,
+        assists,
+        kda: `${kills}/${deaths}/${assists}`,
+        ratio: (kills + assists) / Math.max(1, deaths),
+        participation: kills + assists,
+      };
+
+      if (!bestPerformance || performance.ratio > bestPerformance.ratio ||
+        (performance.ratio === bestPerformance.ratio && performance.participation > bestPerformance.participation) ||
+        (performance.ratio === bestPerformance.ratio && performance.participation === bestPerformance.participation && performance.kills > bestPerformance.kills)) {
+        bestPerformance = performance;
+      }
+      break;
+    }
+  });
+
+  return bestPerformance;
+}
+
 export function splitPlayerNames(value) {
   return parsePlayers(value)
     .map((player) => player.name)
@@ -88,9 +131,7 @@ export function getPlayerStats(matches) {
       if (!name) return;
       const normalizedName = name.toLowerCase();
       const details = getPlayerLabel(player);
-      const [kills, deaths, assists] = details.kda && details.kda !== "-"
-        ? details.kda.split("/").map(Number)
-        : [Number(details.kills || 0), Number(details.deaths || 0), Number(details.assists || 0)];
+      const [kills, deaths, assists] = getPlayerKdaNumbers(details);
       const champion = details.champion && details.champion !== "Unknown" ? details.champion : null;
       const won = match.winner === team;
 
