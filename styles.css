@@ -503,16 +503,26 @@ textarea {
 .spin-stage > label { width: min(100%, 300px); margin-bottom: 16px; }
 .spin-stage select { width: 100%; min-height: 46px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 2px; outline: none; background: var(--input); color: var(--ink); font: 15px "Segoe UI"; }
 .spin-wheel-control { position: relative; display: grid; justify-items: center; width: 260px; padding-top: 8px; }
-.spin-wheel-pointer { position: absolute; z-index: 2; top: 0; left: 50%; width: 0; height: 0; border-right: 12px solid transparent; border-left: 12px solid transparent; border-top: 23px solid var(--ink); transform: translateX(-50%); }
-.spin-wheel { position: relative; width: 240px; height: 240px; overflow: hidden; border: 6px solid var(--white); border-radius: 50%; box-shadow: 0 0 0 1px var(--line), 0 10px 28px rgb(0 0 0 / 18%); transition: transform 4.2s cubic-bezier(.12, .58, .16, 1); }
+.spin-wheel-pointer { position: absolute; z-index: 2; top: 0; left: 50%; width: 0; height: 0; border-right: 12px solid transparent; border-left: 12px solid transparent; border-top: 23px solid var(--ink); filter: drop-shadow(0 2px 1px rgb(0 0 0 / 20%)); transform: translateX(-50%); transform-origin: 50% 0; }
+.spin-wheel { position: relative; width: 240px; height: 240px; overflow: hidden; border: 6px solid var(--white); border-radius: 50%; box-shadow: 0 0 0 1px var(--line), 0 10px 28px rgb(0 0 0 / 18%); transition: transform var(--spin-duration, 4.2s) cubic-bezier(.08, .68, .08, 1); }
 .spin-wheel::after { position: absolute; inset: 50%; width: 30px; height: 30px; border: 5px solid var(--white); border-radius: 50%; background: var(--ink); content: ""; transform: translate(-50%, -50%); }
-.spin-wheel-label { position: absolute; top: 50%; left: 50%; width: 84px; margin: -8px 0 0 -42px; overflow: hidden; color: #fff; font-size: 11px; font-weight: 700; text-align: center; text-overflow: ellipsis; text-shadow: 0 1px 3px rgb(0 0 0 / 65%); transition: transform 4.2s cubic-bezier(.12, .58, .16, 1); white-space: nowrap; }
+.spin-wheel-label { position: absolute; top: 50%; left: 50%; width: 84px; margin: -8px 0 0 -42px; overflow: hidden; color: #fff; font-size: 11px; font-weight: 700; text-align: center; text-overflow: ellipsis; text-shadow: 0 1px 3px rgb(0 0 0 / 65%); transition: transform var(--spin-duration, 4.2s) cubic-bezier(.08, .68, .08, 1); white-space: nowrap; }
 .spin-wheel-label.custom-option { width: 90px; margin: -22px 0 0 -45px; overflow: visible; }
 .spin-role-option { display: grid; gap: 2px; justify-items: center; }
 .spin-wheel-label .role-icon { width: 28px; height: 28px; }
 .spin-wheel-label .role-icon img { width: 27px; height: 27px; filter: brightness(0) invert(1) drop-shadow(0 1px 2px rgb(0 0 0 / 55%)); }
 .spin-role-option > span:last-child { font-size: 10px; line-height: 1; }
 .spin-wheel-result { min-height: 24px; margin-top: 14px; color: var(--ink); font-size: 17px; font-weight: 700; text-align: center; }
+.spin-wheel-control.is-spinning .spin-wheel { box-shadow: 0 0 0 1px var(--line), 0 13px 34px rgb(0 0 0 / 24%); }
+.spin-wheel-control.is-spinning .spin-wheel-pointer { animation: wheel-pointer-tick .16s ease-in-out infinite alternate; }
+.spin-wheel-control.is-spinning .spin-wheel-result { color: var(--muted); font-size: 14px; font-weight: 600; }
+.spin-wheel-control.has-result .spin-wheel-result { animation: wheel-result-reveal .42s cubic-bezier(.2, .9, .25, 1.25); }
+@keyframes wheel-pointer-tick { from { transform: translateX(-50%) rotate(-5deg); } to { transform: translateX(-50%) rotate(5deg); } }
+@keyframes wheel-result-reveal { from { opacity: 0; transform: translateY(7px) scale(.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .spin-wheel, .spin-wheel-label { transition-duration: 1ms; }
+  .spin-wheel-control.is-spinning .spin-wheel-pointer, .spin-wheel-control.has-result .spin-wheel-result { animation: none; }
+}
 .spin-wheel-button { width: 180px; margin-top: 8px; justify-content: center; }
 .spin-complete { display: grid; width: min(100%, 320px); gap: 12px; align-self: center; text-align: center; }
 .spin-complete .eyebrow { margin: 0; }
