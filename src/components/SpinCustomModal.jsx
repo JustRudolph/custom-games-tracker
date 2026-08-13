@@ -72,7 +72,15 @@ export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseT
 
   function assignRole(role) {
     if (!selectedRolePlayer) return;
-    setAssignments((current) => ({ ...current, [selectedRolePlayer]: role }));
+    const finalPlayer = unassignedPlayers.find((name) => name !== selectedRolePlayer);
+    const finalRole = availableRoles.find((availableRole) => availableRole !== role);
+    setAssignments((current) => {
+      const nextAssignments = { ...current, [selectedRolePlayer]: role };
+      if (unassignedPlayers.length === 2 && availableRoles.length === 2 && finalPlayer && finalRole) {
+        nextAssignments[finalPlayer] = finalRole;
+      }
+      return nextAssignments;
+    });
     setSelectedRolePlayer("");
   }
 
