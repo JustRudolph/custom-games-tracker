@@ -33,7 +33,11 @@ function App() {
   const [isChampionLibraryLoading, setIsChampionLibraryLoading] = useState(true);
   const [championLibraryError, setChampionLibraryError] = useState("");
   const [theme, setTheme] = useState(
-    () => localStorage.getItem("customs-ledger-theme") || "light",
+    () => {
+      const savedTheme = localStorage.getItem("customs-ledger-theme");
+      if (["light", "dark"].includes(savedTheme)) return savedTheme;
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    },
   );
 
   useEffect(() => {
