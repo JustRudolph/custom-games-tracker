@@ -30,11 +30,11 @@ export default function FullLeaderboard({ players, onBack }) {
                 {String(index + 1).padStart(2, "0")}
               </span>
               <strong>{name}</strong>
-              <span>
+              <span className="leaderboard-record">
                 {stat.wins}W - {stat.games - stat.wins}L
               </span>
               <span className="table-rate">{getWinRate(stat)}%</span>
-              <span>{getAverageKda(stat)}</span>
+              <span className="leaderboard-kda">{getAverageKda(stat)}</span>
               <strong>{stat.bestChampion}</strong>
               <strong className="leaderboard-role"><RoleIcon role={stat.bestRole} /></strong>
             </div>
