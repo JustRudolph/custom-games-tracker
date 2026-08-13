@@ -74,7 +74,10 @@ function App() {
   const playerNames = useMemo(() => [...new Set([...players.filter((player) => player.active).map((player) => player.name), ...matches.flatMap((match) => [...match.blue, ...match.red].map(getPlayerName))])].sort(), [matches, players]);
 
   async function saveMatch(match) {
-    if (match.id) await api.updateMatch(match);
+    if (match.status === "draft") {
+      if (match.id) await api.updateMatchDraft(match);
+      else await api.createMatchDraft(match);
+    } else if (match.id) await api.updateMatch(match);
     else await api.createMatch(match);
     await loadDatabaseData();
   }

@@ -263,9 +263,10 @@ app.get("/api/matches", async (req, res) => {
 });
 function formatPlayer(row) { const values = [row.kills, row.deaths, row.assists]; return { name: row.player_name, role: row.role, rank: row.rank_at_match || "", champion: row.champion_name || "", kills: row.kills ?? "", deaths: row.deaths ?? "", assists: row.assists ?? "", kda: values.every((value) => value !== null) ? values.join("/") : "-" }; }
 app.post("/api/matches", requireAuth, requireWrite, async (req, res) => {
-  const inputError = validateMatchInput(req.body);
+  const input = req.query.mode === "draft" ? { ...req.body, status: "draft" } : req.body;
+  const inputError = validateMatchInput(input);
   if (inputError) return res.status(400).json({ error: inputError });
-  const { date, winner = "", matchType = "manual", status = "complete", notes = "", blue, red } = req.body;
+  const { date, winner = "", matchType = "manual", status = "complete", notes = "", blue, red } = input;
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
@@ -277,9 +278,10 @@ app.post("/api/matches", requireAuth, requireWrite, async (req, res) => {
 });
 app.put("/api/matches/:id", requireAuth, requireWrite, async (req, res) => {
   if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Invalid match ID." });
-  const inputError = validateMatchInput(req.body);
+  const input = req.query.mode === "draft" ? { ...req.body, status: "draft" } : req.body;
+  const inputError = validateMatchInput(input);
   if (inputError) return res.status(400).json({ error: inputError });
-  const { date, winner = "", matchType = "manual", status = "complete", notes = "", blue, red } = req.body;
+  const { date, winner = "", matchType = "manual", status = "complete", notes = "", blue, red } = input;
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();

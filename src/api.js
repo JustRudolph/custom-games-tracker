@@ -24,6 +24,8 @@ export const api = {
   deletePlayer: (id) => request("/players/" + id, { method: "DELETE" }),
   getMatches: () => request("/matches"),
   createMatch: (match) => request("/matches", { method: "POST", body: JSON.stringify(match) }),
+  createMatchDraft: (match) => request("/matches?mode=draft", { method: "POST", body: JSON.stringify(match) }),
   updateMatch: (match) => request("/matches/" + match.id, { method: "PUT", body: JSON.stringify(match) }),
+  updateMatchDraft: (match) => request("/matches/" + match.id + "?mode=draft", { method: "PUT", body: JSON.stringify(match) }),
   deleteMatch: (id) => request("/matches/" + id, { method: "DELETE" }),
 };
