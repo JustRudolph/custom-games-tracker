@@ -58,7 +58,7 @@ export default function AppHeader({
   return (
     <header className={"topbar " + (isMenuOpen ? "menu-open" : "")} ref={headerRef}>
       <button className="brand" type="button" onClick={() => runAction(onOpenDashboard)} aria-label="Back to dashboard">
-        <span className="brand-mark" aria-hidden="true" />
+        <img className="brand-mark" src="/diamond-dynasty-dragon-icon.png" alt="" aria-hidden="true" />
         Diamond Dynasty
       </button>
       <button

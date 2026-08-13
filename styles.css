@@ -145,18 +145,13 @@ button:disabled { cursor: not-allowed; opacity: .58; }
 }
 
 .brand-mark {
-  position: relative;
-  width: 17px;
-  height: 17px;
+  width: 38px;
+  height: 38px;
   flex: 0 0 auto;
-  border: 2px solid var(--blue);
-  transform: rotate(45deg);
-}
-.brand-mark::after {
-  position: absolute;
-  inset: 3px;
-  background: var(--yellow);
-  content: "";
+  border: 1px solid color-mix(in srgb, var(--blue) 55%, var(--line));
+  border-radius: 6px;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 18%);
 }
 .top-actions {
   display: flex;
