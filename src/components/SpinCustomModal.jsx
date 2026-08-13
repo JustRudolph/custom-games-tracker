@@ -18,7 +18,7 @@ function TeamRoster({ title, players, assignments }) {
   );
 }
 
-export default function SpinCustomModal({ playerNames, onClose, onUseTeams }) {
+export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseTeams }) {
   const [query, setQuery] = useState("");
   const [selectedPlayers, setSelectedPlayers] = useState([]);
   const [drawPool, setDrawPool] = useState(null);
@@ -108,7 +108,7 @@ export default function SpinCustomModal({ playerNames, onClose, onUseTeams }) {
             <section className="spin-stage">
               {drawingTeams && <><div className="spin-stage-head"><p className="eyebrow">TEAM DRAW</p><h3>Spin for Team 1</h3><span>{teamOne.length}/5 selected</span></div><SpinWheel options={drawPool} buttonLabel="Spin player" resultButtonLabel="Continue to roles" continueAfterResult={teamOne.length < 4} onResult={addTeamOnePlayer} /></>}
               {assigningRoles && <><div className="spin-stage-head"><p className="eyebrow">ROLE DRAW</p><h3>{teamOneComplete ? "Team 2 roles" : "Team 1 roles"}</h3><span>{unassignedPlayers.length} players left</span></div><label>Player<select value={selectedRolePlayer} onChange={(event) => setSelectedRolePlayer(event.target.value)}><option value="">Select player</option>{unassignedPlayers.map((name) => <option key={name} value={name}>{name}</option>)}</select></label><SpinWheel options={availableRoles} buttonLabel="Spin role" resultButtonLabel="Confirm role" disabled={!selectedRolePlayer} renderOption={(role) => <span className="spin-role-option"><RoleIcon role={role} /><span>{role}</span></span>} onResult={assignRole} /></>}
-              {rolesComplete && <div className="spin-complete"><p className="eyebrow">TEAMS READY</p><h3>Roles are assigned</h3><button className="primary-btn" type="button" onClick={useTeams}>Log this custom <span>-&gt;</span></button></div>}
+              {rolesComplete && <div className="spin-complete"><p className="eyebrow">TEAMS READY</p><h3>Roles are assigned</h3>{!canWrite && <p className="spin-review-note">Add the match details next, then submit it for admin review.</p>}<button className="primary-btn" type="button" onClick={useTeams}>{canWrite ? "Log this custom" : "Continue to submission"} <span>-&gt;</span></button></div>}
             </section>
           </div>
         )}

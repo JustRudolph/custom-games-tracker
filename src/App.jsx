@@ -213,9 +213,9 @@ function App() {
             >
               Log a custom <span>-&gt;</span>
             </button>
-            {canWrite && <button className="secondary-btn spin-custom-button" onClick={() => setIsSpinModalOpen(true)}>
+            <button className="secondary-btn spin-custom-button" onClick={() => setIsSpinModalOpen(true)}>
               Spin a custom
-            </button>}
+            </button>
           </div>
           {notice && <div className="submission-notice" role="status"><span>{notice}</span><button type="button" aria-label="Dismiss message" onClick={() => setNotice("")}>x</button></div>}
           <section className="dashboard-layout">
@@ -251,7 +251,7 @@ function App() {
       )}
       {isLoginOpen && <LoginPage onLogin={login} onClose={() => setIsLoginOpen(false)} />}
       {isProfileSettingsOpen && admin && <ProfileSettingsModal admin={admin} onSave={updateProfile} onClose={() => setIsProfileSettingsOpen(false)} />}
-      {isSpinModalOpen && <SpinCustomModal playerNames={players.filter((player) => player.active).map((player) => player.name)} onClose={() => setIsSpinModalOpen(false)} onUseTeams={useSpunTeams} />}
+      {isSpinModalOpen && <SpinCustomModal playerNames={players.filter((player) => player.active).map((player) => player.name)} canWrite={canWrite} onClose={() => setIsSpinModalOpen(false)} onUseTeams={useSpunTeams} />}
       <footer></footer>
     </div>
   );
