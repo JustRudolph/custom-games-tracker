@@ -16,6 +16,7 @@ const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 const trustProxy = Number(process.env.TRUST_PROXY || 0);
 const dummyPasswordHash = "scrypt$0123456789abcdef0123456789abcdef$693614e72597f21adf75adf1f99bba137e396f41c5af83d232841071e83862e5d16e5c116d867fec9d069120328590be45014c5c926d8796a7e6022b4ab9c67c";
 const apiWindows = new Map();
+const submissionWindows = new Map();
 const databaseHost = String(process.env.DB_HOST || "").toLowerCase();
 const isPrivateDatabaseHost = ["127.0.0.1", "localhost", "::1"].includes(databaseHost)
   || databaseHost.endsWith(".railway.internal");
@@ -124,17 +125,31 @@ function validateTeam(teamPlayers, side, isComplete) {
 
 function validateMatchInput(body) {
   const { date, winner = "", matchType = "manual", status = "complete", blue = [], red = [] } = body || {};
-  const isComplete = status === "complete";
+  const requiresCompleteDetails = status !== "draft";
   if (!isValidDate(date)) return "A valid match date is required.";
-  if (!["draft", "complete"].includes(status)) return "A valid match status is required.";
-  if (isComplete && !["blue", "red"].includes(winner)) return "A winning team is required.";
-  if (!isComplete && winner && !["blue", "red"].includes(winner)) return "A valid winning team is required.";
+  if (!["draft", "pending", "complete"].includes(status)) return "A valid match status is required.";
+  if (requiresCompleteDetails && !["blue", "red"].includes(winner)) return "A winning team is required.";
+  if (!requiresCompleteDetails && winner && !["blue", "red"].includes(winner)) return "A valid winning team is required.";
   if (!["manual", "spin"].includes(matchType)) return "A valid match type is required.";
-  const teamError = validateTeam(blue, "Blue", isComplete) || validateTeam(red, "Red", isComplete);
+  const teamError = validateTeam(blue, "Blue", requiresCompleteDetails) || validateTeam(red, "Red", requiresCompleteDetails);
   if (teamError) return teamError;
   const allNames = [...blue, ...red].map((player) => cleanText(player.name, 100).toLowerCase());
   if (new Set(allNames).size !== 10) return "A player cannot appear on both teams.";
   return "";
+}
+
+function limitGuestSubmissions(req, res, next) {
+  const now = Date.now();
+  const key = req.ip;
+  const current = submissionWindows.get(key);
+  const windowState = !current || current.resetAt <= now ? { count: 0, resetAt: now + 60 * 60_000 } : current;
+  windowState.count += 1;
+  submissionWindows.set(key, windowState);
+  if (submissionWindows.size > 5000) {
+    for (const [entryKey, value] of submissionWindows) if (value.resetAt <= now) submissionWindows.delete(entryKey);
+  }
+  if (windowState.count > 5) return res.status(429).json({ error: "Too many match submissions. Try again later." });
+  next();
 }
 
 function optionalStat(value) {
@@ -262,6 +277,20 @@ app.get("/api/matches", async (req, res) => {
   }));
 });
 function formatPlayer(row) { const values = [row.kills, row.deaths, row.assists]; return { name: row.player_name, role: row.role, rank: row.rank_at_match || "", champion: row.champion_name || "", kills: row.kills ?? "", deaths: row.deaths ?? "", assists: row.assists ?? "", kda: values.every((value) => value !== null) ? values.join("/") : "-" }; }
+app.post("/api/match-submissions", limitGuestSubmissions, async (req, res) => {
+  const input = { ...req.body, status: "pending" };
+  const inputError = validateMatchInput(input);
+  if (inputError) return res.status(400).json({ error: inputError });
+  const { date, winner, matchType = "manual", notes = "", blue, red } = input;
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [match] = await connection.execute("INSERT INTO matches (played_at, winner_team, match_type, status, notes, created_by) VALUES (?, ?, ?, 'pending', ?, NULL)", [date, winner, matchType, cleanText(notes, 2000)]);
+    await saveMatchTeams(connection, match.insertId, blue, red);
+    await connection.commit();
+    res.status(201).json({ id: String(match.insertId), status: "pending" });
+  } catch (error) { console.error("Guest match submission failed:", error); await connection.rollback(); res.status(500).json({ error: "Could not submit match for review." }); } finally { connection.release(); }
+});
 app.post("/api/matches", requireAuth, requireWrite, async (req, res) => {
   const input = req.query.mode === "draft" ? { ...req.body, status: "draft" } : req.body;
   const inputError = validateMatchInput(input);
@@ -275,6 +304,12 @@ app.post("/api/matches", requireAuth, requireWrite, async (req, res) => {
     await connection.commit();
     res.status(201).json({ id: String(match.insertId) });
   } catch (error) { console.error("Match save failed:", error); await connection.rollback(); res.status(500).json({ error: "Could not save match." }); } finally { connection.release(); }
+});
+app.post("/api/matches/:id/approve", requireAuth, requireWrite, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Invalid match ID." });
+  const [result] = await db.execute("UPDATE matches SET status = 'complete', created_by = ? WHERE id = ? AND status = 'pending'", [req.admin.id, req.params.id]);
+  if (!result.affectedRows) return res.status(404).json({ error: "Pending match not found." });
+  res.json({ id: String(req.params.id), status: "complete" });
 });
 app.put("/api/matches/:id", requireAuth, requireWrite, async (req, res) => {
   if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Invalid match ID." });

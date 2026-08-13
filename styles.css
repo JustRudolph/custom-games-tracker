@@ -731,6 +731,11 @@ textarea {
   background: color-mix(in srgb, var(--yellow) 18%, var(--white));
   color: color-mix(in srgb, var(--yellow) 58%, var(--ink));
 }
+.match-type-badge.pending {
+  border-color: color-mix(in srgb, var(--blue) 55%, var(--line));
+  background: color-mix(in srgb, var(--blue) 12%, var(--white));
+  color: color-mix(in srgb, var(--blue) 75%, var(--ink));
+}
 .match-form-actions { display: flex; gap: 12px; justify-content: flex-end; align-items: stretch; margin-top: 18px; }
 .match-form-actions .primary-btn { min-width: 220px; }
 .match-type-field { min-width: 0; margin: 0 0 16px; padding: 0; border: 0; }
@@ -740,11 +745,15 @@ textarea {
 .match-type-options label.selected { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 12%, var(--white)); color: var(--ink); }
 .match-type-options input { width: auto; min-width: auto; margin: 0; accent-color: var(--blue); }
 .draft-matchup { padding: 18px; border-left: 5px solid var(--yellow); background: color-mix(in srgb, var(--yellow) 7%, var(--white)); }
+.pending-matchup { border-left-color: var(--blue); background: color-mix(in srgb, var(--blue) 6%, var(--white)); }
+.pending-matchup .login-error { margin-top: 12px; }
 .draft-matchup-head { display: flex; gap: 18px; justify-content: space-between; align-items: center; }
 .draft-matchup-head > div:first-child { display: grid; grid-template-columns: auto 1fr; gap: 5px 10px; align-items: center; }
 .draft-matchup-head > div:first-child > span:last-child { grid-column: 2; color: var(--muted); font-size: 13px; }
 .draft-match-actions { display: flex; gap: 10px; align-items: center; }
 .draft-match-actions .primary-btn { min-width: 180px; }
+.submission-notice { display: flex; gap: 16px; align-items: center; justify-content: space-between; margin-top: 18px; padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--blue) 40%, var(--line)); border-left: 4px solid var(--blue); background: color-mix(in srgb, var(--blue) 7%, var(--white)); color: var(--ink); font-weight: 600; }
+.submission-notice button { width: 32px; height: 32px; flex: 0 0 auto; border: 0; background: transparent; color: var(--muted); font-size: 20px; cursor: pointer; }
 .draft-teams { display: grid; grid-template-columns: 1fr 1fr; margin-top: 14px; border-top: 1px solid var(--line); }
 .draft-teams .compact-team { padding-bottom: 0; }
 .draft-teams .compact-team-result { display: none; }

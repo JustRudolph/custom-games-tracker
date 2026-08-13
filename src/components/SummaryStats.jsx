@@ -1,7 +1,7 @@
 import { getAverageKda, getWinRate } from "../utils/matches.js";
 
 export default function SummaryStats({ matches, topPlayer }) {
-  const completedMatches = matches.filter((match) => match.status !== "draft");
+  const completedMatches = matches.filter((match) => match.status === "complete");
   const latestMatch = completedMatches[0];
   const latestWinner =
     latestMatch?.winner === "blue"

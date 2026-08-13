@@ -62,13 +62,18 @@ function DraftMatchup({ match, champions, onEdit, onDelete }) {
   return <div className="draft-matchup"><div className="draft-matchup-head"><div><span className="match-type-badge draft">Draft</span><strong>Match details pending</strong><span>{match.date} · {getMatchTypeLabel(match.matchType)}</span></div><div className="draft-match-actions"><button className="primary-btn" type="button" onClick={() => onEdit(match)}>Continue editing <span>-&gt;</span></button><button className="delete" type="button" aria-label="Delete draft" onClick={() => onDelete(match)}>x</button></div></div><div className="draft-teams"><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={false} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={false} /></div></div>;
 }
 
+function PendingMatchup({ match, champions, onEdit, onApprove, onDelete, isApproving, error }) {
+  return <div className="draft-matchup pending-matchup"><div className="draft-matchup-head"><div><span className="match-type-badge pending">Pending review</span><strong>Guest submission</strong><span>{match.date} · {getMatchTypeLabel(match.matchType)}</span></div><div className="draft-match-actions"><button className="ghost-btn" type="button" disabled={isApproving} onClick={() => onEdit(match)}>Review / edit</button><button className="primary-btn" type="button" disabled={isApproving} onClick={() => onApprove(match)}>{isApproving ? "Approving..." : "Approve"} <span>-&gt;</span></button><button className="delete" type="button" disabled={isApproving} aria-label="Delete pending submission" onClick={() => onDelete(match)}>x</button></div></div>{error && <div className="login-error" role="alert">{error}</div>}<div className="draft-teams"><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={match.winner === "blue"} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={match.winner === "red"} /></div></div>;
+}
+
 function CollapsedMatchup({ match, champions, onExpand }) {
   return <div className={"collapsed-matchup winner-" + match.winner}><div className="collapsed-match-meta"><span>{match.date}</span><strong>{getMatchTypeLabel(match.matchType)}</strong></div><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={match.winner === "blue"} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={match.winner === "red"} /><button className="compact-expand" type="button" aria-label="Expand match" onClick={onExpand}>⌄</button></div>;
 }
 
-function MatchCard({ match, onDelete, onEdit, champions, canWrite }) {
+function MatchCard({ match, onDelete, onEdit, onApprove, approvingMatchId, approvalError, champions, canWrite }) {
   const [isExpanded, setIsExpanded] = useState(false);
   if (match.status === "draft") return <article className="match-card draft-card"><DraftMatchup match={match} champions={champions} onEdit={onEdit} onDelete={onDelete} /></article>;
+  if (match.status === "pending") return <article className="match-card pending-card"><PendingMatchup match={match} champions={champions} onEdit={onEdit} onApprove={onApprove} onDelete={onDelete} isApproving={approvingMatchId === match.id} error={approvalError?.id === match.id ? approvalError.message : ""} /></article>;
   return (
     <article className={"match-card " + (isExpanded ? "expanded" : "collapsed")}>
       {isExpanded && <div className={"match-card-top " + (canWrite ? "can-write" : "guest")}>
@@ -95,6 +100,7 @@ export default function MatchHistory({
   matches,
   onDeleteMatch,
   onEditMatch,
+  onApproveMatch,
   onExport,
   champions,
   canWrite,
@@ -102,10 +108,13 @@ export default function MatchHistory({
   const [matchPendingDelete, setMatchPendingDelete] = useState(null);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [approvingMatchId, setApprovingMatchId] = useState("");
+  const [approvalError, setApprovalError] = useState(null);
   const visibleMatches = canWrite
     ? matches
-    : matches.filter((match) => match.status !== "draft");
+    : matches.filter((match) => match.status === "complete");
   async function deleteMatch() { if (!matchPendingDelete || isDeleting) return; setDeleteError(""); setIsDeleting(true); try { await onDeleteMatch(matchPendingDelete); setMatchPendingDelete(null); } catch (error) { setDeleteError(error.message || "Could not delete match."); } finally { setIsDeleting(false); } }
+  async function approveMatch(match) { if (approvingMatchId) return; setApprovalError(null); setApprovingMatchId(match.id); try { await onApproveMatch(match); } catch (error) { setApprovalError({ id: match.id, message: error.message || "Could not approve submission." }); } finally { setApprovingMatchId(""); } }
   return (
     <div className="panel history-panel">
       <div className="panel-head history-head">
@@ -127,6 +136,9 @@ export default function MatchHistory({
               match={match}
               onDelete={(match) => { setDeleteError(""); setMatchPendingDelete(match); }}
               onEdit={onEditMatch}
+              onApprove={approveMatch}
+              approvingMatchId={approvingMatchId}
+              approvalError={approvalError}
               champions={champions}
               canWrite={canWrite}
             />

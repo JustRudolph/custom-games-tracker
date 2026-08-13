@@ -82,7 +82,7 @@ export function splitPlayerNames(value) {
 }
 
 export function getPlayerStats(matches) {
-  const stats = matches.filter((match) => match.status !== "draft").reduce((result, match) => {
+  const stats = matches.filter((match) => match.status === "complete").reduce((result, match) => {
     ["blue", "red"].forEach((team) => match[team].forEach((player) => {
       const name = String(getPlayerName(player) || "").trim();
       if (!name) return;

@@ -20,6 +20,8 @@ Apply `007_login_attempts.sql` before exposing the login route publicly. It stor
 
 Apply `008_match_drafts.sql` to allow admins to save team rosters before entering champions, K/D/A, and the winning team. Drafts are excluded from public match history and player statistics until completed.
 
+Apply `009_guest_match_submissions.sql` to add pending guest submissions. Pending matches remain private and do not affect statistics until an owner or admin approves them.
+
 PowerShell setup:
 
     Get-Content -Raw .\db\migrations\004_admin_sessions.sql | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p --default-character-set=utf8mb4
@@ -27,6 +29,7 @@ PowerShell setup:
     Get-Content -Raw .\db\migrations\006_match_types.sql | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p --default-character-set=utf8mb4
     Get-Content -Raw .\db\migrations\007_login_attempts.sql | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p --default-character-set=utf8mb4
     Get-Content -Raw .\db\migrations\008_match_drafts.sql | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p --default-character-set=utf8mb4
+    Get-Content -Raw .\db\migrations\009_guest_match_submissions.sql | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p --default-character-set=utf8mb4
     $env:ADMIN_USERNAME = "owner"
     $env:ADMIN_NAME = "Owner"
     $env:ADMIN_ROLE = "owner"

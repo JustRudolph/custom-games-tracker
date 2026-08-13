@@ -26,6 +26,7 @@ function App() {
   const [spunTeams, setSpunTeams] = useState(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
+  const [notice, setNotice] = useState("");
   const [players, setPlayers] = useState([]);
   const [dataError, setDataError] = useState("");
   const [dataDragonChampions, setDataDragonChampions] = useState([]);
@@ -74,6 +75,11 @@ function App() {
   const playerNames = useMemo(() => [...new Set([...players.filter((player) => player.active).map((player) => player.name), ...matches.flatMap((match) => [...match.blue, ...match.red].map(getPlayerName))])].sort(), [matches, players]);
 
   async function saveMatch(match) {
+    if (!canWrite) {
+      await api.submitMatch(match);
+      setNotice("Your custom was submitted for admin review.");
+      return;
+    }
     if (match.status === "draft") {
       if (match.id) await api.updateMatchDraft(match);
       else await api.createMatchDraft(match);
@@ -92,7 +98,7 @@ function App() {
   async function logout() {
     await api.logout();
     setAdmin(null);
-    setMatches((current) => current.filter((match) => match.status !== "draft"));
+    setMatches((current) => current.filter((match) => match.status === "complete"));
     setView("dashboard");
     await loadDatabaseData();
   }
@@ -105,6 +111,11 @@ function App() {
   async function deleteMatch(match) {
     await api.deleteMatch(match.id);
     setMatches((current) => current.filter((item) => item.id !== match.id));
+  }
+
+  async function approveMatch(match) {
+    await api.approveMatch(match.id);
+    await loadDatabaseData();
   }
 
   async function deletePlayer(id) {
@@ -195,23 +206,25 @@ function App() {
             matches={matches}
             topPlayer={topPlayer}
           />
-          {canWrite && <div className="dashboard-actions">
+          <div className="dashboard-actions">
             <button
               className="primary-btn log-custom-button"
               onClick={() => openMatchForm()}
             >
               Log a custom <span>-&gt;</span>
             </button>
-            <button className="secondary-btn spin-custom-button" onClick={() => setIsSpinModalOpen(true)}>
+            {canWrite && <button className="secondary-btn spin-custom-button" onClick={() => setIsSpinModalOpen(true)}>
               Spin a custom
-            </button>
-          </div>}
+            </button>}
+          </div>
+          {notice && <div className="submission-notice" role="status"><span>{notice}</span><button type="button" aria-label="Dismiss message" onClick={() => setNotice("")}>x</button></div>}
           <section className="dashboard-layout">
             <section className="workspace">
               <MatchHistory
                 matches={matches}
                 onDeleteMatch={deleteMatch}
                 onEditMatch={(match) => openMatchForm(match)}
+                onApproveMatch={approveMatch}
                 onExport={exportMatches}
                 champions={dataDragonChampions}
                 canWrite={canWrite}
@@ -231,6 +244,7 @@ function App() {
               isChampionLibraryLoading={isChampionLibraryLoading}
               championLibraryError={championLibraryError}
               initialTeams={spunTeams}
+              canWrite={canWrite}
             />
           )}
         </main>

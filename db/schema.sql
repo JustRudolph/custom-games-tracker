@@ -77,7 +77,7 @@ CREATE TABLE matches (
   played_at DATETIME NOT NULL, 
   winner_team ENUM('blue', 'red') NULL,
   match_type ENUM('manual', 'spin') NOT NULL DEFAULT 'manual',
-  status ENUM('draft', 'complete') NOT NULL DEFAULT 'complete',
+  status ENUM('draft', 'pending', 'complete') NOT NULL DEFAULT 'complete',
   notes TEXT NULL, created_by BIGINT UNSIGNED NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
