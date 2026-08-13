@@ -60,7 +60,7 @@ export default function SpinWheel({ options, buttonLabel, resultButtonLabel = "C
     messageTimers.current = [
       window.setTimeout(() => setSpinMessage("The wheel is deciding..."), duration * 0.42),
       window.setTimeout(() => setSpinMessage("Almost there..."), duration * 0.73),
-      window.setTimeout(() => setSpinMessage("Hold on..."), duration * 0.9),
+      window.setTimeout(() => setSpinMessage("Hold on..."), duration * 0.97),
     ];
     resultTimer.current = window.setTimeout(() => {
       setIsSpinning(false);
