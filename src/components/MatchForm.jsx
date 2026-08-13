@@ -3,18 +3,21 @@ import { ROLES, today } from "../utils/matches.js";
 import ChampionPicker from "./ChampionPicker.jsx";
 import DiscardConfirmation from "./DiscardConfirmation.jsx";
 
-const newPlayer = () => ({ name: "", role: "", champion: "", kills: "", deaths: "", assists: "" });
-const newTeam = () => Array.from({ length: 5 }, newPlayer);
-const fillTeam = (players) => newTeam().map((player, index) => ({ ...player, ...(players?.[index] || {}) }));
+const newPlayer = (role) => ({ name: "", role, champion: "", kills: "", deaths: "", assists: "" });
+const newTeam = () => ROLES.map(newPlayer);
+const fillTeam = (players) => newTeam().map((player, index) => {
+  const initialPlayer = players?.[index];
+  return {
+    ...player,
+    ...initialPlayer,
+    role: initialPlayer?.role || player.role,
+  };
+});
 const emptyForm = (initialTeams) => ({ date: today(), blue: fillTeam(initialTeams?.blue), red: fillTeam(initialTeams?.red), winner: "", matchType: initialTeams?.matchType || "manual", notes: "" });
 
-function TeamEditor({ team, players, savedPlayers, champions, isChampionLibraryLoading, isActive, onChange }) {
+function TeamEditor({ team, players, champions, isChampionLibraryLoading, isActive, onChange }) {
   const update = (index, field, value) => onChange(players.map((player, playerIndex) => playerIndex === index ? { ...player, [field]: value } : player));
-  const selectPlayer = (index, name) => {
-    const saved = savedPlayers.find((player) => player.name.toLowerCase() === name.toLowerCase());
-    const role = saved?.roleRanks ? Object.keys(saved.roleRanks).find((key) => saved.roleRanks[key]) || "" : saved?.role || "";
-    onChange(players.map((player, playerIndex) => playerIndex === index ? { ...player, name, role } : player));
-  };
+  const selectPlayer = (index, name) => update(index, "name", name);
   const selectRole = (index, role) => {
     onChange(players.map((player, playerIndex) => {
       if (playerIndex !== index) return player;
@@ -33,7 +36,7 @@ function TeamEditor({ team, players, savedPlayers, champions, isChampionLibraryL
   </div>
 }
 
-export default function MatchForm({ onAddMatch, onClose, playerNames, champions, savedPlayers, isChampionLibraryLoading, championLibraryError, initialTeams }) {
+export default function MatchForm({ onAddMatch, onClose, playerNames, champions, isChampionLibraryLoading, championLibraryError, initialTeams }) {
   const [form, setForm] = useState(() => emptyForm(initialTeams));
   const [activeTeam, setActiveTeam] = useState('blue');
   const [isCloseConfirmationOpen, setIsCloseConfirmationOpen] = useState(false);
@@ -64,6 +67,6 @@ export default function MatchForm({ onAddMatch, onClose, playerNames, champions,
   return <div className="modal-backdrop" onMouseDown={() => setIsCloseConfirmationOpen(true)}><div className="panel entry-panel modal-panel" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
     <div className="panel-head"><div><p className="eyebrow">{form.matchType === "spin" ? "SPIN WHEEL CUSTOM" : "NEW ENTRY"}</p><h2>Log a custom</h2></div><button className="modal-close" type="button" onClick={() => setIsCloseConfirmationOpen(true)}>x</button></div>
     <datalist id="player-options">{playerNames.map((name) => <option value={name} key={name} />)}</datalist>
-    <form onSubmit={submit}><label>Date<input type="date" required value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /></label>{championLibraryError && <div className="login-error">Champion library unavailable: {championLibraryError}</div>}<div className="mobile-team-tabs" role="tablist" aria-label="Teams">{['blue', 'red'].map((team) => <button className={activeTeam === team ? 'active' : ''} type="button" role="tab" aria-selected={activeTeam === team} key={team} onClick={() => setActiveTeam(team)}><span className={'team-dot ' + team} />{team[0].toUpperCase() + team.slice(1)} team</button>)}</div><div className="team-editors"><TeamEditor team="blue" players={form.blue} savedPlayers={savedPlayers} champions={champions} isChampionLibraryLoading={isChampionLibraryLoading} isActive={activeTeam === 'blue'} onChange={(blue) => setForm({ ...form, blue })} /><TeamEditor team="red" players={form.red} savedPlayers={savedPlayers} champions={champions} isChampionLibraryLoading={isChampionLibraryLoading} isActive={activeTeam === 'red'} onChange={(red) => setForm({ ...form, red })} /></div><div className="winner-row"><span className="label">WINNER</span><div className="winner-options">{['blue', 'red'].map((team) => <label key={team}><input type="radio" name="winner" required value={team} checked={form.winner === team} onChange={(event) => setForm({ ...form, winner: event.target.value })} /><span>{team[0].toUpperCase() + team.slice(1)} team</span></label>)}</div></div><label>Notes<input maxLength="2000" placeholder="Optional context" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>{error && <div className="login-error" role="alert">{error}</div>}<button className="primary-btn" type="submit" disabled={isSubmitting || Boolean(championLibraryError)}>{isSubmitting ? "Saving match..." : "Save match"} <span>-&gt;</span></button></form>
+    <form onSubmit={submit}><label>Date<input type="date" required value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /></label>{championLibraryError && <div className="login-error">Champion library unavailable: {championLibraryError}</div>}<div className="mobile-team-tabs" role="tablist" aria-label="Teams">{['blue', 'red'].map((team) => <button className={activeTeam === team ? 'active' : ''} type="button" role="tab" aria-selected={activeTeam === team} key={team} onClick={() => setActiveTeam(team)}><span className={'team-dot ' + team} />{team[0].toUpperCase() + team.slice(1)} team</button>)}</div><div className="team-editors"><TeamEditor team="blue" players={form.blue} champions={champions} isChampionLibraryLoading={isChampionLibraryLoading} isActive={activeTeam === 'blue'} onChange={(blue) => setForm({ ...form, blue })} /><TeamEditor team="red" players={form.red} champions={champions} isChampionLibraryLoading={isChampionLibraryLoading} isActive={activeTeam === 'red'} onChange={(red) => setForm({ ...form, red })} /></div><div className="winner-row"><span className="label">WINNER</span><div className="winner-options">{['blue', 'red'].map((team) => <label key={team}><input type="radio" name="winner" required value={team} checked={form.winner === team} onChange={(event) => setForm({ ...form, winner: event.target.value })} /><span>{team[0].toUpperCase() + team.slice(1)} team</span></label>)}</div></div><label>Notes<input maxLength="2000" placeholder="Optional context" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>{error && <div className="login-error" role="alert">{error}</div>}<button className="primary-btn" type="submit" disabled={isSubmitting || Boolean(championLibraryError)}>{isSubmitting ? "Saving match..." : "Save match"} <span>-&gt;</span></button></form>
   </div>{isCloseConfirmationOpen && <DiscardConfirmation title="Close this match?" message="The teams, champions, and K/D/A values you entered will be lost." onCancel={() => setIsCloseConfirmationOpen(false)} onDiscard={onClose} />}</div>;
 }

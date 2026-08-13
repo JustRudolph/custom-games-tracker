@@ -223,7 +223,6 @@ function App() {
               champions={dataDragonChampions}
               isChampionLibraryLoading={isChampionLibraryLoading}
               championLibraryError={championLibraryError}
-              savedPlayers={players}
               initialTeams={spunTeams}
             />
           )}
