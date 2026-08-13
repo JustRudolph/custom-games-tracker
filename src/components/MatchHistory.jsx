@@ -3,6 +3,11 @@ import { getPlayerLabel, getPlayerName } from "../utils/matches.js";
 import RoleIcon from "./RoleIcon.jsx";
 import ConfirmationModal from "./ConfirmationModal.jsx";
 
+function getMatchTypeLabel(matchType, compact = false) {
+  if (matchType === "spin") return compact ? "Spin wheel" : "Spin wheel custom";
+  return compact ? "Summoner's Rift" : "Summoner's Rift custom";
+}
+
 function PlayerLine({ player, team, champions }) {
   const details = getPlayerLabel(player);
   const champion = champions.find((item) => item.name.toLowerCase() === String(details.champion || "").toLowerCase());
@@ -54,11 +59,11 @@ function CompactTeam({ players, champions, team, isWinner }) {
 }
 
 function DraftMatchup({ match, champions, onEdit, onDelete }) {
-  return <div className="draft-matchup"><div className="draft-matchup-head"><div><span className="match-type-badge draft">Draft</span><strong>Match details pending</strong><span>{match.date} · {match.matchType === "spin" ? "Spin wheel custom" : "Summoner's Rift"}</span></div><div className="draft-match-actions"><button className="primary-btn" type="button" onClick={() => onEdit(match)}>Continue editing <span>-&gt;</span></button><button className="delete" type="button" aria-label="Delete draft" onClick={() => onDelete(match)}>x</button></div></div><div className="draft-teams"><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={false} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={false} /></div></div>;
+  return <div className="draft-matchup"><div className="draft-matchup-head"><div><span className="match-type-badge draft">Draft</span><strong>Match details pending</strong><span>{match.date} · {getMatchTypeLabel(match.matchType)}</span></div><div className="draft-match-actions"><button className="primary-btn" type="button" onClick={() => onEdit(match)}>Continue editing <span>-&gt;</span></button><button className="delete" type="button" aria-label="Delete draft" onClick={() => onDelete(match)}>x</button></div></div><div className="draft-teams"><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={false} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={false} /></div></div>;
 }
 
 function CollapsedMatchup({ match, champions, onExpand }) {
-  return <div className={"collapsed-matchup winner-" + match.winner}><span className={"match-type-badge " + (match.matchType === "spin" ? "spin" : "manual")}>{match.matchType === "spin" ? "Spin wheel" : "Summoner's Rift"}</span><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={match.winner === "blue"} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={match.winner === "red"} /><button className="compact-expand" type="button" aria-label="Expand match" onClick={onExpand}>⌄</button></div>;
+  return <div className={"collapsed-matchup winner-" + match.winner}><span className={"match-type-badge " + (match.matchType === "spin" ? "spin" : "manual")}>{getMatchTypeLabel(match.matchType, true)}</span><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={match.winner === "blue"} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={match.winner === "red"} /><button className="compact-expand" type="button" aria-label="Expand match" onClick={onExpand}>⌄</button></div>;
 }
 
 function MatchCard({ match, onDelete, onEdit, champions, canWrite }) {
@@ -68,7 +73,7 @@ function MatchCard({ match, onDelete, onEdit, champions, canWrite }) {
     <article className={"match-card " + (isExpanded ? "expanded" : "collapsed")}>
       {isExpanded && <div className={"match-card-top " + (canWrite ? "can-write" : "guest")}>
         <span>{match.date}</span>
-        <span className={"match-type-badge " + (match.matchType === "spin" ? "spin" : "manual")}>{match.matchType === "spin" ? "Spin wheel" : "Summoner's Rift"}</span>
+        <span className={"match-type-badge " + (match.matchType === "spin" ? "spin" : "manual")}>{getMatchTypeLabel(match.matchType, true)}</span>
         <span>{match.notes || "Custom game"}</span>
         <span className={"match-winner " + match.winner}>{match.winner} victory</span>
         {canWrite && <button

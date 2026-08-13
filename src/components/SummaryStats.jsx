@@ -12,7 +12,7 @@ export default function SummaryStats({ matches, topPlayer }) {
   const latestType =
     latestMatch?.matchType === "spin"
       ? "Spin wheel custom"
-      : "Summoner's Rift";
+      : "Summoner's Rift custom";
   const latestDate = latestMatch?.date
     ? new Intl.DateTimeFormat(undefined, {
         day: "numeric",
