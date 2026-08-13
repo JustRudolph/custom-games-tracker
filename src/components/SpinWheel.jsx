@@ -25,6 +25,8 @@ export default function SpinWheel({ options, buttonLabel, resultButtonLabel = "C
   const [landedResult, setLandedResult] = useState("");
   const resultTimer = useRef(null);
   const messageTimers = useRef([]);
+  const pendingResult = useRef("");
+  const wheelControl = useRef(null);
   const background = useMemo(() => {
     if (!displayOptions.length) return "var(--soft)";
     const slice = 100 / displayOptions.length;
@@ -51,7 +53,9 @@ export default function SpinWheel({ options, buttonLabel, resultButtonLabel = "C
     const nextRotation = rotation + fullTurns * 360 + ((targetAngle - (rotation % 360) + 360) % 360);
     const result = spinOptions[index];
 
+    window.clearTimeout(resultTimer.current);
     messageTimers.current.forEach(window.clearTimeout);
+    pendingResult.current = result;
     setDisplayOptions(spinOptions);
     setIsSpinning(true);
     setSpinDuration(duration);
@@ -65,8 +69,24 @@ export default function SpinWheel({ options, buttonLabel, resultButtonLabel = "C
     resultTimer.current = window.setTimeout(() => {
       setIsSpinning(false);
       setSpinMessage("");
-      setLandedResult(result);
+      setLandedResult(pendingResult.current);
+      pendingResult.current = "";
     }, duration);
+  }
+
+  function skipAnimation() {
+    if (!isSpinning || !pendingResult.current) return;
+
+    window.clearTimeout(resultTimer.current);
+    messageTimers.current.forEach(window.clearTimeout);
+    messageTimers.current = [];
+    wheelControl.current?.querySelectorAll(".spin-wheel, .spin-wheel-label").forEach((element) => {
+      element.getAnimations().forEach((animation) => animation.finish());
+    });
+    setIsSpinning(false);
+    setSpinMessage("");
+    setLandedResult(pendingResult.current);
+    pendingResult.current = "";
   }
 
   function spin() {
@@ -92,7 +112,7 @@ export default function SpinWheel({ options, buttonLabel, resultButtonLabel = "C
   }
 
   return (
-    <div className={"spin-wheel-control" + (isSpinning ? " is-spinning" : "") + (landedResult ? " has-result" : "")}>
+    <div ref={wheelControl} className={"spin-wheel-control" + (isSpinning ? " is-spinning" : "") + (landedResult ? " has-result" : "")}>
       <div className="spin-wheel-pointer" aria-hidden="true" />
       <div
         className="spin-wheel"
@@ -114,7 +134,7 @@ export default function SpinWheel({ options, buttonLabel, resultButtonLabel = "C
       </div>
       <div className="spin-wheel-result" aria-live="polite">{landedResult || spinMessage || "\u00a0"}</div>
       <div className="spin-wheel-actions">
-        {allowRespin && landedResult && <button className="ghost-btn" type="button" onClick={respin}>Respin</button>}
+        {isSpinning ? <button className="secondary-btn spin-skip-button" type="button" onClick={skipAnimation}>Skip animation</button> : allowRespin && <button className="secondary-btn spin-respin-button" type="button" disabled={!landedResult} onClick={respin}>Respin role</button>}
         <button className="primary-btn spin-wheel-button" type="button" disabled={!landedResult && (disabled || isSpinning || !options.length)} onClick={spin}>
           {isSpinning ? "Spinning..." : landedResult ? (continueAfterResult ? "Spin again" : resultButtonLabel) : buttonLabel}
         </button>

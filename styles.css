@@ -479,7 +479,7 @@ textarea {
 .spin-selected-players button { display: inline-flex; gap: 8px; align-items: center; padding: 7px 9px; border: 1px solid var(--line); border-radius: 2px; background: var(--soft); color: var(--ink); font: 13px "Segoe UI"; cursor: pointer; }
 .spin-selected-players button span { color: var(--muted); }
 .spin-start-button { width: 100%; }
-.spin-start-button:disabled, .spin-wheel-button:disabled { cursor: not-allowed; opacity: .48; }
+.spin-start-button:disabled, .spin-wheel-button:disabled, .spin-respin-button:disabled { cursor: not-allowed; opacity: .48; }
 .spin-custom-layout { display: grid; grid-template-columns: minmax(360px, 430px) minmax(0, 1fr); gap: 32px; }
 .spin-rosters { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-content: start; }
 .spin-team-roster { min-width: 0; border: 1px solid var(--line); }
@@ -498,15 +498,15 @@ textarea {
 .spin-stage-head > span { color: var(--muted); font: 600 12px "Segoe UI", Arial, sans-serif; }
 .spin-stage > label { width: min(100%, 300px); margin-bottom: 16px; }
 .spin-stage select { width: 100%; min-height: 46px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 2px; outline: none; background: var(--input); color: var(--ink); font: 15px "Segoe UI"; }
-.spin-wheel-control { --wheel-label-radius: 116px; --wheel-role-label-radius: 84px; position: relative; display: grid; justify-items: center; width: 326px; padding-top: 8px; }
+.spin-wheel-control { --wheel-label-radius: 140px; --wheel-role-label-radius: 104px; position: relative; display: grid; justify-items: center; width: 386px; padding-top: 8px; }
 .spin-wheel-pointer { position: absolute; z-index: 2; top: 0; left: 50%; width: 0; height: 0; border-right: 12px solid transparent; border-left: 12px solid transparent; border-top: 23px solid var(--ink); filter: drop-shadow(0 2px 1px rgb(0 0 0 / 20%)); transform: translateX(-50%); transform-origin: 50% 0; }
-.spin-wheel { position: relative; width: 300px; height: 300px; overflow: hidden; border: 7px solid var(--white); border-radius: 50%; box-shadow: 0 0 0 1px var(--line), 0 10px 28px rgb(0 0 0 / 18%); transition: transform var(--spin-duration, 4.2s) cubic-bezier(.08, .68, .08, 1); }
+.spin-wheel { position: relative; width: 360px; height: 360px; overflow: hidden; border: 7px solid var(--white); border-radius: 50%; box-shadow: 0 0 0 1px var(--line), 0 10px 28px rgb(0 0 0 / 18%); transition: transform var(--spin-duration, 4.2s) cubic-bezier(.08, .68, .08, 1); }
 .spin-wheel::after { position: absolute; inset: 50%; width: 30px; height: 30px; border: 5px solid var(--white); border-radius: 50%; background: var(--ink); content: ""; transform: translate(-50%, -50%); }
 .spin-wheel-label { position: absolute; top: 50%; left: 50%; width: 104px; margin: -9px 0 0 -52px; overflow: hidden; color: #fff; font-size: 13px; font-weight: 700; text-align: center; text-overflow: ellipsis; text-shadow: 0 1px 3px rgb(0 0 0 / 65%); transition: transform var(--spin-duration, 4.2s) cubic-bezier(.08, .68, .08, 1); white-space: nowrap; }
 .spin-wheel-label.custom-option { width: 100px; margin: -24px 0 0 -50px; overflow: visible; }
 .spin-role-option { display: grid; gap: 2px; justify-items: center; }
-.spin-wheel-label .role-icon { width: 32px; height: 32px; }
-.spin-wheel-label .role-icon img { width: 31px; height: 31px; filter: brightness(0) invert(1) drop-shadow(0 1px 2px rgb(0 0 0 / 55%)); }
+.spin-wheel-label .role-icon { width: 36px; height: 36px; }
+.spin-wheel-label .role-icon img { width: 35px; height: 35px; filter: brightness(0) invert(1) drop-shadow(0 1px 2px rgb(0 0 0 / 55%)); }
 .spin-role-option > span:last-child { font-size: 10px; line-height: 1; }
 .spin-wheel-result { min-height: 24px; margin-top: 14px; color: var(--ink); font-size: 17px; font-weight: 700; text-align: center; }
 .spin-wheel-control.is-spinning .spin-wheel { box-shadow: 0 0 0 1px var(--line), 0 13px 34px rgb(0 0 0 / 24%); }
@@ -520,13 +520,14 @@ textarea {
   .spin-wheel-control.is-spinning .spin-wheel-pointer, .spin-wheel-control.has-result .spin-wheel-result { animation: none; }
 }
 .spin-wheel-actions { display: flex; min-height: 48px; gap: 8px; align-items: stretch; margin-top: 8px; }
-.spin-wheel-actions .ghost-btn { min-width: 90px; justify-content: center; }
+.spin-respin-button, .spin-skip-button { min-width: 130px; justify-content: center; }
 .spin-wheel-button { width: 180px; justify-content: center; }
 .spin-complete { display: grid; width: min(100%, 320px); gap: 12px; align-self: center; text-align: center; }
 .spin-complete .eyebrow { margin: 0; }
 .spin-complete .primary-btn { justify-content: space-between; }
 .spin-complete-actions { display: grid; grid-template-columns: 1fr 1.35fr; gap: 8px; }
-.spin-complete-actions .ghost-btn { justify-content: center; }
+.spin-complete-actions .secondary-btn { justify-content: center; }
+.spin-copy-teams-button { width: 100%; justify-content: center !important; }
 .spin-retry-draft { justify-content: center; }
 .spin-copy-status { min-height: 20px; color: var(--muted); font-size: 14px; }
 .player-entry input, .player-entry select { min-height: 42px; padding: 9px 10px; }
@@ -1137,6 +1138,8 @@ footer {
   .spin-wheel-control { --wheel-label-radius: 84px; --wheel-role-label-radius: 62px; width: 236px; }
   .spin-wheel { width: 220px; height: 220px; }
   .spin-wheel-label { transform-origin: center; }
+  .spin-wheel-actions { width: 100%; }
+  .spin-respin-button, .spin-skip-button, .spin-wheel-button { width: auto; min-width: 0; flex: 1; padding-inline: 8px; }
   .modal-panel {
     width: min(100%, 700px);
     max-height: calc(100vh - 28px);
