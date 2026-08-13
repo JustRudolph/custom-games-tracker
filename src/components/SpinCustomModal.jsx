@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ROLES } from "../utils/matches.js";
+import { findFirstPlayerMatch } from "../utils/players.js";
 import RoleIcon from "./RoleIcon.jsx";
 import SpinWheel from "./SpinWheel.jsx";
 import DiscardConfirmation from "./DiscardConfirmation.jsx";
@@ -54,6 +55,16 @@ export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseT
     setQuery("");
   }
 
+  function selectFirstMatchingPlayer(event) {
+    if (event.key !== "Enter") return;
+
+    const match = findFirstPlayerMatch(availablePlayers, query);
+    if (!match) return;
+
+    event.preventDefault();
+    togglePlayer(match);
+  }
+
   function startDraw() {
     setDrawPool([...selectedPlayers]);
   }
@@ -103,7 +114,7 @@ export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseT
         {drawPool === null && (
           <section className="spin-player-selection">
             <div className="spin-selection-head"><strong>Players</strong><span>{selectedPlayers.length}/10 selected</span></div>
-            <input type="search" autoComplete="off" placeholder="Search saved players..." value={query} onChange={(event) => setQuery(event.target.value)} />
+            <input type="search" autoComplete="off" placeholder="Search saved players..." value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={selectFirstMatchingPlayer} />
             {query && <div className="spin-player-results">{availablePlayers.length ? availablePlayers.map((name) => <button type="button" key={name} onClick={() => togglePlayer(name)}>{name}</button>) : <span>No players found.</span>}</div>}
             <div className="spin-selected-players">{selectedPlayers.map((name) => <button type="button" key={name} onClick={() => togglePlayer(name)}>{name}<span>x</span></button>)}</div>
             <button className="primary-btn spin-start-button" type="button" disabled={selectedPlayers.length !== 10} onClick={startDraw}>Start team draw <span>-&gt;</span></button>
