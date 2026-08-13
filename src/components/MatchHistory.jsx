@@ -63,7 +63,7 @@ function DraftMatchup({ match, champions, onEdit, onDelete }) {
 }
 
 function CollapsedMatchup({ match, champions, onExpand }) {
-  return <div className={"collapsed-matchup winner-" + match.winner}><span className={"match-type-badge " + (match.matchType === "spin" ? "spin" : "manual")}>{getMatchTypeLabel(match.matchType, true)}</span><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={match.winner === "blue"} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={match.winner === "red"} /><button className="compact-expand" type="button" aria-label="Expand match" onClick={onExpand}>⌄</button></div>;
+  return <div className={"collapsed-matchup winner-" + match.winner}><div className="collapsed-match-meta"><span>{match.date}</span><strong>{getMatchTypeLabel(match.matchType)}</strong></div><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={match.winner === "blue"} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={match.winner === "red"} /><button className="compact-expand" type="button" aria-label="Expand match" onClick={onExpand}>⌄</button></div>;
 }
 
 function MatchCard({ match, onDelete, onEdit, champions, canWrite }) {

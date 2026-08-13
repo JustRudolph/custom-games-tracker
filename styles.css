@@ -629,9 +629,12 @@ textarea {
   align-items: center;
   padding: 10px 18px;
   color: var(--muted);
-  font: 12px "DM Mono";
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
 }
 .match-card-top > span { min-width: 0; overflow-wrap: anywhere; }
+.match-card-top > span:first-child { font-variant-numeric: tabular-nums; }
 .match-card-top .delete {
   margin-left: auto;
 }
@@ -648,7 +651,10 @@ textarea {
   border-radius: 2px;
   background: var(--soft);
   color: var(--muted);
-  font: 700 10px "DM Mono", monospace;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   line-height: 1;
   text-transform: uppercase;
   white-space: nowrap;
@@ -660,10 +666,10 @@ textarea {
 }
 .collapse-match { display: grid; width: 32px; height: 32px; place-items: center; border: 0; border-radius: 2px; background: var(--soft); color: var(--blue); font-size: 19px; line-height: 1; cursor: pointer; }
 .match-card.collapsed .match-card-top { padding-block: 13px; }
-.collapsed-matchup { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 38px; min-height: 132px; background: var(--white); }
-.collapsed-matchup > .match-type-badge { position: absolute; z-index: 1; top: 9px; left: 50%; transform: translateX(-50%); }
-.collapsed-matchup > .match-type-badge + .compact-team,
-.collapsed-matchup > .match-type-badge + .compact-team + .compact-team { padding-top: 32px; }
+.collapsed-matchup { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 38px; grid-template-rows: auto 1fr; min-height: 150px; background: var(--white); }
+.collapsed-match-meta { display: flex; grid-column: 1 / 3; gap: 9px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+.collapsed-match-meta strong { color: var(--ink); font-size: 13px; }
+.collapsed-match-meta span::after { margin-left: 9px; color: var(--muted); content: "·"; }
 .collapsed-matchup.winner-blue { border-left: 5px solid var(--blue); }
 .collapsed-matchup.winner-red { border-left: 5px solid var(--red); }
 .compact-team { display: grid; align-content: center; gap: 5px; min-width: 0; padding: 11px 14px; }
@@ -676,7 +682,7 @@ textarea {
 .compact-player img, .compact-icon-fallback { width: 21px; height: 21px; flex: 0 0 auto; border-radius: 2px; }
 .compact-icon-fallback { display: inline-block; background: var(--soft); }
 .compact-player span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.compact-expand { display: grid; width: 100%; place-items: center; border: 0; border-left: 1px solid color-mix(in srgb, var(--line) 70%, transparent); background: color-mix(in srgb, var(--blue) 20%, var(--white)); color: var(--blue); font-size: 18px; cursor: pointer; }
+.compact-expand { display: grid; width: 100%; grid-column: 3; grid-row: 1 / 3; place-items: center; border: 0; border-left: 1px solid color-mix(in srgb, var(--line) 70%, transparent); background: color-mix(in srgb, var(--blue) 20%, var(--white)); color: var(--blue); font-size: 18px; cursor: pointer; }
 .compact-expand:hover { background: color-mix(in srgb, var(--blue) 28%, var(--white)); }
 .match-team-section {
   padding: 10px 18px 14px;
@@ -1241,10 +1247,11 @@ footer {
   .match-card-top { flex-wrap: wrap; padding: 10px 12px; }
   .match-card-top .match-winner { order: 3; }
   .match-card-top .collapse-match { margin-left: auto; }
-  .collapsed-matchup { grid-template-columns: minmax(0, 1fr) 34px; }
+  .collapsed-matchup { grid-template-columns: minmax(0, 1fr) 34px; grid-template-rows: auto auto auto; }
+  .collapsed-match-meta { grid-column: 1; }
   .compact-team { grid-column: 1; }
   .compact-team + .compact-team { border-top: 1px solid var(--line); border-left: 0; }
-  .compact-expand { grid-column: 2; grid-row: 1 / span 2; border-left: 1px solid var(--line); }
+  .compact-expand { grid-column: 2; grid-row: 1 / 4; border-left: 1px solid var(--line); }
   .match-team-section { padding-inline: 9px; }
   .match-columns,
   .match-player { grid-template-columns: minmax(58px, 1fr) 28px minmax(62px, 1fr) 46px; gap: 5px; }
