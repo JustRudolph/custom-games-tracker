@@ -84,16 +84,18 @@ function App() {
 
   async function saveMatch(match) {
     if (!canWrite) {
-      await api.submitMatch(match);
+      const saved = await api.submitMatch(match);
       setNotice("Your custom was submitted for admin review.");
-      return;
+      return { ...match, ...saved };
     }
+    let saved;
     if (match.status === "draft") {
-      if (match.id) await api.updateMatchDraft(match);
-      else await api.createMatchDraft(match);
-    } else if (match.id) await api.updateMatch(match);
-    else await api.createMatch(match);
+      if (match.id) saved = await api.updateMatchDraft(match);
+      else saved = await api.createMatchDraft(match);
+    } else if (match.id) saved = await api.updateMatch(match);
+    else saved = await api.createMatch(match);
     await loadDatabaseData();
+    return { ...match, ...saved };
   }
 
   async function login(credentials) {
@@ -259,7 +261,7 @@ function App() {
       )}
       {isLoginOpen && <LoginPage onLogin={login} onClose={() => setIsLoginOpen(false)} />}
       {isProfileSettingsOpen && admin && <ProfileSettingsModal admin={admin} onSave={updateProfile} onClose={() => setIsProfileSettingsOpen(false)} />}
-      {isSpinModalOpen && <SpinCustomModal playerNames={activePlayerNames} canWrite={canWrite} onClose={() => setIsSpinModalOpen(false)} onUseTeams={useSpunTeams} />}
+      {isSpinModalOpen && <SpinCustomModal playerNames={activePlayerNames} canWrite={canWrite} onClose={() => setIsSpinModalOpen(false)} onUseTeams={useSpunTeams} onSaveDraft={saveMatch} />}
       <footer></footer>
     </div>
   );

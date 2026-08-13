@@ -16,7 +16,7 @@ function randomUnit() {
   return values[0] / 0xffffffff;
 }
 
-export default function SpinWheel({ options, buttonLabel, resultButtonLabel = "Confirm result", disabled, continueAfterResult = false, renderOption, onResult }) {
+export default function SpinWheel({ options, buttonLabel, resultButtonLabel = "Confirm result", disabled, continueAfterResult = false, allowRespin = false, renderOption, onResult }) {
   const [rotation, setRotation] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinDuration, setSpinDuration] = useState(minimumSpinDuration);
@@ -85,6 +85,12 @@ export default function SpinWheel({ options, buttonLabel, resultButtonLabel = "C
     startSpin(options);
   }
 
+  function respin() {
+    if (isSpinning || !landedResult) return;
+    setLandedResult("");
+    startSpin(displayOptions);
+  }
+
   return (
     <div className={"spin-wheel-control" + (isSpinning ? " is-spinning" : "") + (landedResult ? " has-result" : "")}>
       <div className="spin-wheel-pointer" aria-hidden="true" />
@@ -107,9 +113,12 @@ export default function SpinWheel({ options, buttonLabel, resultButtonLabel = "C
         })}
       </div>
       <div className="spin-wheel-result" aria-live="polite">{landedResult || spinMessage || "\u00a0"}</div>
-      <button className="primary-btn spin-wheel-button" type="button" disabled={!landedResult && (disabled || isSpinning || !options.length)} onClick={spin}>
-        {isSpinning ? "Spinning..." : landedResult ? (continueAfterResult ? "Spin again" : resultButtonLabel) : buttonLabel}
-      </button>
+      <div className="spin-wheel-actions">
+        {allowRespin && landedResult && <button className="ghost-btn" type="button" onClick={respin}>Respin</button>}
+        <button className="primary-btn spin-wheel-button" type="button" disabled={!landedResult && (disabled || isSpinning || !options.length)} onClick={spin}>
+          {isSpinning ? "Spinning..." : landedResult ? (continueAfterResult ? "Spin again" : resultButtonLabel) : buttonLabel}
+        </button>
+      </div>
     </div>
   );
 }

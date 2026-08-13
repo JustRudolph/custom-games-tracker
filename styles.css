@@ -519,10 +519,16 @@ textarea {
   .spin-wheel, .spin-wheel-label { transition-duration: 1ms; }
   .spin-wheel-control.is-spinning .spin-wheel-pointer, .spin-wheel-control.has-result .spin-wheel-result { animation: none; }
 }
-.spin-wheel-button { width: 180px; margin-top: 8px; justify-content: center; }
+.spin-wheel-actions { display: flex; min-height: 48px; gap: 8px; align-items: stretch; margin-top: 8px; }
+.spin-wheel-actions .ghost-btn { min-width: 90px; justify-content: center; }
+.spin-wheel-button { width: 180px; justify-content: center; }
 .spin-complete { display: grid; width: min(100%, 320px); gap: 12px; align-self: center; text-align: center; }
 .spin-complete .eyebrow { margin: 0; }
 .spin-complete .primary-btn { justify-content: space-between; }
+.spin-complete-actions { display: grid; grid-template-columns: 1fr 1.35fr; gap: 8px; }
+.spin-complete-actions .ghost-btn { justify-content: center; }
+.spin-retry-draft { justify-content: center; }
+.spin-copy-status { min-height: 20px; color: var(--muted); font-size: 14px; }
 .player-entry input, .player-entry select { min-height: 42px; padding: 9px 10px; }
 .player-entry select { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 2px; outline: none; background: var(--input); color: var(--ink); font: 14px "Segoe UI"; }
 .kda-inputs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }

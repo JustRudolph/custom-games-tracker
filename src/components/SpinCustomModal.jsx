@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { ROLES } from "../utils/matches.js";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ROLES, today } from "../utils/matches.js";
 import { findFirstPlayerMatch } from "../utils/players.js";
 import RoleIcon from "./RoleIcon.jsx";
 import SpinWheel from "./SpinWheel.jsx";
@@ -19,7 +19,30 @@ function TeamRoster({ title, players, assignments }) {
   );
 }
 
-export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseTeams }) {
+const toMatchPlayer = (name, assignments) => ({ name, role: assignments[name], champion: "", kills: "", deaths: "", assists: "" });
+
+function buildSpinDraft(teamOne, teamTwo, assignments) {
+  return {
+    date: today(),
+    blue: teamOne.map((name) => toMatchPlayer(name, assignments)),
+    red: teamTwo.map((name) => toMatchPlayer(name, assignments)),
+    winner: "",
+    matchType: "spin",
+    status: "draft",
+    notes: "",
+  };
+}
+
+function formatTeamsForClipboard(teamOne, teamTwo, assignments) {
+  const formatTeam = (title, players) => [title, ...ROLES.map((role) => {
+    const player = players.find((name) => assignments[name] === role);
+    return `${role}: ${player || "-"}`;
+  })].join("\n");
+
+  return `${formatTeam("Team 1", teamOne)}\n\n${formatTeam("Team 2", teamTwo)}`;
+}
+
+export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseTeams, onSaveDraft }) {
   const [query, setQuery] = useState("");
   const [selectedPlayers, setSelectedPlayers] = useState([]);
   const [drawPool, setDrawPool] = useState(null);
@@ -28,6 +51,11 @@ export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseT
   const [assignments, setAssignments] = useState({});
   const [selectedRolePlayer, setSelectedRolePlayer] = useState("");
   const [isCloseConfirmationOpen, setIsCloseConfirmationOpen] = useState(false);
+  const [savedDraft, setSavedDraft] = useState(null);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [draftError, setDraftError] = useState("");
+  const [copyStatus, setCopyStatus] = useState("");
+  const hasStartedDraftSave = useRef(false);
 
   useEffect(() => {
     const closeOnEscape = (event) => event.key === "Escape" && setIsCloseConfirmationOpen(true);
@@ -48,6 +76,28 @@ export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseT
   const unassignedPlayers = activeTeam.filter((name) => !assignments[name]);
   const availableRoles = ROLES.filter((role) => !activeTeam.some((name) => assignments[name] === role));
   const rolesComplete = teamOne.length === 5 && teamTwo.length === 5 && [...teamOne, ...teamTwo].every((name) => assignments[name]);
+
+  useEffect(() => {
+    if (!rolesComplete || !canWrite || hasStartedDraftSave.current) return;
+
+    saveCompletedDraft();
+  }, [assignments, canWrite, onSaveDraft, rolesComplete, teamOne, teamTwo]);
+
+  async function saveCompletedDraft() {
+    if (hasStartedDraftSave.current || isSavingDraft) return;
+
+    hasStartedDraftSave.current = true;
+    setIsSavingDraft(true);
+    setDraftError("");
+    try {
+      setSavedDraft(await onSaveDraft(buildSpinDraft(teamOne, teamTwo, assignments)));
+    } catch (error) {
+      hasStartedDraftSave.current = false;
+      setDraftError(error.message || "Could not save the draft.");
+    } finally {
+      setIsSavingDraft(false);
+    }
+  }
 
   function togglePlayer(name) {
     if (drawPool) return;
@@ -96,8 +146,16 @@ export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseT
   }
 
   function useTeams() {
-    const toMatchPlayer = (name) => ({ name, role: assignments[name], champion: "", kills: "", deaths: "", assists: "" });
-    onUseTeams({ blue: teamOne.map(toMatchPlayer), red: teamTwo.map(toMatchPlayer) });
+    onUseTeams(savedDraft || buildSpinDraft(teamOne, teamTwo, assignments));
+  }
+
+  async function copyTeams() {
+    try {
+      await navigator.clipboard.writeText(formatTeamsForClipboard(teamOne, teamTwo, assignments));
+      setCopyStatus("Teams copied");
+    } catch {
+      setCopyStatus("Could not copy teams");
+    }
   }
 
   const drawingTeams = drawPool !== null && teamOne.length < 5;
@@ -126,8 +184,8 @@ export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseT
             <div className="spin-rosters"><TeamRoster title="Team 1" players={teamOne} assignments={assignments} /><TeamRoster title="Team 2" players={teamTwo} assignments={assignments} /></div>
             <section className="spin-stage">
               {drawingTeams && <><div className="spin-stage-head"><p className="eyebrow">TEAM DRAW</p><h3>Spin for Team 1</h3><span>{teamOne.length}/5 selected</span></div><SpinWheel options={drawPool} buttonLabel="Spin player" resultButtonLabel="Continue to roles" continueAfterResult={teamOne.length < 4} onResult={addTeamOnePlayer} /></>}
-              {assigningRoles && <><div className="spin-stage-head"><p className="eyebrow">ROLE DRAW</p><h3>{teamOneComplete ? "Team 2 roles" : "Team 1 roles"}</h3><span>{unassignedPlayers.length} players left</span></div><label>Player<select value={selectedRolePlayer} onChange={(event) => setSelectedRolePlayer(event.target.value)}><option value="">Select player</option>{unassignedPlayers.map((name) => <option key={name} value={name}>{name}</option>)}</select></label><SpinWheel options={availableRoles} buttonLabel="Spin role" resultButtonLabel="Confirm role" disabled={!selectedRolePlayer} renderOption={(role) => <span className="spin-role-option"><RoleIcon role={role} /><span>{role}</span></span>} onResult={assignRole} /></>}
-              {rolesComplete && <div className="spin-complete"><p className="eyebrow">TEAMS READY</p><h3>Roles are assigned</h3>{!canWrite && <p className="spin-review-note">Add the match details next, then submit it for admin review.</p>}<button className="primary-btn" type="button" onClick={useTeams}>{canWrite ? "Log this custom" : "Continue to submission"} <span>-&gt;</span></button></div>}
+              {assigningRoles && <><div className="spin-stage-head"><p className="eyebrow">ROLE DRAW</p><h3>{teamOneComplete ? "Team 2 roles" : "Team 1 roles"}</h3><span>{unassignedPlayers.length} players left</span></div><label>Player<select value={selectedRolePlayer} onChange={(event) => setSelectedRolePlayer(event.target.value)}><option value="">Select player</option>{unassignedPlayers.map((name) => <option key={name} value={name}>{name}</option>)}</select></label><SpinWheel options={availableRoles} buttonLabel="Spin role" resultButtonLabel="Confirm role" disabled={!selectedRolePlayer} allowRespin renderOption={(role) => <span className="spin-role-option"><RoleIcon role={role} /><span>{role}</span></span>} onResult={assignRole} /></>}
+              {rolesComplete && <div className="spin-complete"><p className="eyebrow">TEAMS READY</p><h3>Roles are assigned</h3>{canWrite ? <p className="spin-review-note">{isSavingDraft ? "Saving draft..." : savedDraft ? "Draft saved to match history." : "The draft could not be saved."}</p> : <p className="spin-review-note">Add the match details next, then submit it for admin review.</p>}{draftError && <div className="login-error" role="alert">{draftError}</div>}{canWrite && draftError && <button className="ghost-btn spin-retry-draft" type="button" onClick={saveCompletedDraft}>Retry saving draft</button>}<div className="spin-complete-actions"><button className="ghost-btn" type="button" onClick={copyTeams}>Copy teams</button><button className="primary-btn" type="button" disabled={canWrite && !savedDraft} onClick={useTeams}>{canWrite ? "Complete draft" : "Continue to submission"} <span>-&gt;</span></button></div>{copyStatus && <span className="spin-copy-status" role="status">{copyStatus}</span>}</div>}
             </section>
           </div>
         )}
