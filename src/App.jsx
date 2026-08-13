@@ -70,10 +70,7 @@ function App() {
 
   const playerStats = useMemo(() => getPlayerStats(matches), [matches]);
   const rankedPlayers = useMemo(() => rankPlayers(playerStats), [playerStats]);
-  const topPlayer = [...rankedPlayers].sort(
-    ([, first], [, second]) =>
-      second.wins / second.games - first.wins / first.games,
-  )[0];
+  const topPlayer = rankedPlayers[0];
   const playerNames = useMemo(() => [...new Set([...players.filter((player) => player.active).map((player) => player.name), ...matches.flatMap((match) => [...match.blue, ...match.red].map(getPlayerName))])].sort(), [matches, players]);
 
   async function addMatch(match) {

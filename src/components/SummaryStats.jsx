@@ -1,4 +1,4 @@
-import { getWinRate } from "../utils/matches.js";
+import { getAverageKda, getWinRate } from "../utils/matches.js";
 
 export default function SummaryStats({ matches, topPlayer }) {
   const latestMatch = matches[0];
@@ -59,7 +59,7 @@ export default function SummaryStats({ matches, topPlayer }) {
         <strong>{topPlayer?.[0] || "-"}</strong>
         <span className="sub">
           {topPlayer
-            ? `${getWinRate(topPlayer[1])}% winrate`
+            ? `${getWinRate(topPlayer[1])}% winrate · ${getAverageKda(topPlayer[1])} avg KDA`
             : "not enough data"}
         </span>
       </div>

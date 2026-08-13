@@ -136,8 +136,9 @@ export function getPlayerStats(matches) {
 export function rankPlayers(stats) {
   return Object.entries(stats).sort(
     ([, first], [, second]) =>
-      second.games - first.games ||
-      second.wins / second.games - first.wins / first.games,
+      second.wins / second.games - first.wins / first.games ||
+      second.averageKda - first.averageKda ||
+      second.games - first.games,
   );
 }
 
