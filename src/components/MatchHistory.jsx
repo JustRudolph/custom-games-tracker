@@ -53,12 +53,17 @@ function CompactTeam({ players, champions, team, isWinner }) {
   })}</div>;
 }
 
+function DraftMatchup({ match, champions, onEdit, onDelete }) {
+  return <div className="draft-matchup"><div className="draft-matchup-head"><div><span className="match-type-badge draft">Draft</span><strong>Match details pending</strong><span>{match.date} · {match.matchType === "spin" ? "Spin wheel custom" : "Manual custom"}</span></div><div className="draft-match-actions"><button className="primary-btn" type="button" onClick={() => onEdit(match)}>Continue editing <span>-&gt;</span></button><button className="delete" type="button" aria-label="Delete draft" onClick={() => onDelete(match)}>x</button></div></div><div className="draft-teams"><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={false} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={false} /></div></div>;
+}
+
 function CollapsedMatchup({ match, champions, onExpand }) {
   return <div className={"collapsed-matchup winner-" + match.winner}><span className={"match-type-badge " + (match.matchType === "spin" ? "spin" : "manual")}>{match.matchType === "spin" ? "Spin wheel" : "Manual"}</span><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={match.winner === "blue"} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={match.winner === "red"} /><button className="compact-expand" type="button" aria-label="Expand match" onClick={onExpand}>⌄</button></div>;
 }
 
-function MatchCard({ match, onDelete, champions, canWrite }) {
+function MatchCard({ match, onDelete, onEdit, champions, canWrite }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  if (match.status === "draft") return <article className="match-card draft-card"><DraftMatchup match={match} champions={champions} onEdit={onEdit} onDelete={onDelete} /></article>;
   return (
     <article className={"match-card " + (isExpanded ? "expanded" : "collapsed")}>
       {isExpanded && <div className={"match-card-top " + (canWrite ? "can-write" : "guest")}>
@@ -84,6 +89,7 @@ function MatchCard({ match, onDelete, champions, canWrite }) {
 export default function MatchHistory({
   matches,
   onDeleteMatch,
+  onEditMatch,
   onExport,
   champions,
   canWrite,
@@ -112,6 +118,7 @@ export default function MatchHistory({
               key={match.id || index}
               match={match}
               onDelete={(match) => { setDeleteError(""); setMatchPendingDelete(match); }}
+              onEdit={onEditMatch}
               champions={champions}
               canWrite={canWrite}
             />

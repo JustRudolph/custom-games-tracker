@@ -73,9 +73,10 @@ function App() {
   const topPlayer = rankedPlayers[0];
   const playerNames = useMemo(() => [...new Set([...players.filter((player) => player.active).map((player) => player.name), ...matches.flatMap((match) => [...match.blue, ...match.red].map(getPlayerName))])].sort(), [matches, players]);
 
-  async function addMatch(match) {
-    const saved = await api.createMatch(match);
-    setMatches((current) => [{ ...match, id: saved.id }, ...current]);
+  async function saveMatch(match) {
+    if (match.id) await api.updateMatch(match);
+    else await api.createMatch(match);
+    await loadDatabaseData();
   }
 
   async function login(credentials) {
@@ -205,6 +206,7 @@ function App() {
               <MatchHistory
                 matches={matches}
                 onDeleteMatch={deleteMatch}
+                onEditMatch={(match) => openMatchForm(match)}
                 onExport={exportMatches}
                 champions={dataDragonChampions}
                 canWrite={canWrite}
@@ -217,7 +219,7 @@ function App() {
           </section>
           {isMatchModalOpen && (
             <MatchForm
-              onAddMatch={addMatch}
+              onSaveMatch={saveMatch}
               onClose={closeMatchForm}
               playerNames={playerNames}
               champions={dataDragonChampions}

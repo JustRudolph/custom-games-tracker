@@ -716,6 +716,22 @@ textarea {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+.match-type-badge.draft {
+  border-color: color-mix(in srgb, var(--yellow) 65%, var(--line));
+  background: color-mix(in srgb, var(--yellow) 18%, var(--white));
+  color: color-mix(in srgb, var(--yellow) 58%, var(--ink));
+}
+.match-form-actions { display: flex; gap: 12px; justify-content: flex-end; align-items: stretch; margin-top: 18px; }
+.match-form-actions .primary-btn { min-width: 220px; }
+.draft-matchup { padding: 18px; border-left: 5px solid var(--yellow); background: color-mix(in srgb, var(--yellow) 7%, var(--white)); }
+.draft-matchup-head { display: flex; gap: 18px; justify-content: space-between; align-items: center; }
+.draft-matchup-head > div:first-child { display: grid; grid-template-columns: auto 1fr; gap: 5px 10px; align-items: center; }
+.draft-matchup-head > div:first-child > span:last-child { grid-column: 2; color: var(--muted); font-size: 13px; }
+.draft-match-actions { display: flex; gap: 10px; align-items: center; }
+.draft-match-actions .primary-btn { min-width: 180px; }
+.draft-teams { display: grid; grid-template-columns: 1fr 1fr; margin-top: 14px; border-top: 1px solid var(--line); }
+.draft-teams .compact-team { padding-bottom: 0; }
+.draft-teams .compact-team-result { display: none; }
 .match-player {
   min-height: 38px;
   border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
@@ -1059,6 +1075,8 @@ footer {
     justify-content: stretch;
     flex-direction: column;
   }
+  .draft-matchup-head { align-items: stretch; flex-direction: column; }
+  .draft-match-actions .primary-btn { flex: 1; }
   .log-custom-button {
     width: 100%;
   }
@@ -1173,6 +1191,10 @@ footer {
   .stat-card:nth-child(3) { grid-column: auto; }
   .stat-card:last-child { border-bottom: 0; }
   .entry-panel, .login-panel, .confirm-modal { padding: 18px; }
+  .match-form-actions { flex-direction: column-reverse; }
+  .match-form-actions .primary-btn { min-width: 0; }
+  .draft-teams { grid-template-columns: 1fr; }
+  .draft-teams .compact-team + .compact-team { border-top: 1px solid var(--line); border-left: 0; }
   .panel-head { gap: 12px; }
   .panel h2 { font-size: 23px; }
   .player-entry { grid-template-columns: 1fr; padding: 30px 9px 9px; }

@@ -107,16 +107,49 @@ function cleanText(value, maxLength) {
   return String(value || "").trim().slice(0, maxLength);
 }
 
-function validateTeam(teamPlayers, side) {
+function validateTeam(teamPlayers, side, isComplete) {
   if (!Array.isArray(teamPlayers) || teamPlayers.length !== 5) return `${side} team must contain exactly five players.`;
   const names = teamPlayers.map((player) => cleanText(player?.name, 100).toLowerCase());
   if (names.some((name) => !name)) return `Every ${side} team player needs a name.`;
   if (new Set(names).size !== 5) return `${side} team contains duplicate players.`;
   if (teamPlayers.some((player) => !roles.has(player?.role))) return `Every ${side} team player needs a valid role.`;
   if (new Set(teamPlayers.map((player) => player.role)).size !== 5) return `${side} team must use each role once.`;
-  if (teamPlayers.some((player) => !cleanText(player?.champion, 80))) return `Every ${side} team player needs a champion.`;
-  if (teamPlayers.some((player) => [player.kills, player.deaths, player.assists].some((value) => value === "" || value === null || value === undefined || !Number.isInteger(Number(value)) || Number(value) < 0 || Number(value) > 65535))) return `${side} team K/D/A values must be whole numbers between 0 and 65535.`;
+  if (isComplete && teamPlayers.some((player) => !cleanText(player?.champion, 80))) return `Every ${side} team player needs a champion.`;
+  if (teamPlayers.some((player) => [player.kills, player.deaths, player.assists].some((value) => {
+    if (!isComplete && (value === "" || value === null || value === undefined)) return false;
+    return value === "" || value === null || value === undefined || !Number.isInteger(Number(value)) || Number(value) < 0 || Number(value) > 65535;
+  }))) return `${side} team K/D/A values must be whole numbers between 0 and 65535.`;
   return "";
+}
+
+function validateMatchInput(body) {
+  const { date, winner = "", matchType = "manual", status = "complete", blue = [], red = [] } = body || {};
+  const isComplete = status === "complete";
+  if (!isValidDate(date)) return "A valid match date is required.";
+  if (!["draft", "complete"].includes(status)) return "A valid match status is required.";
+  if (isComplete && !["blue", "red"].includes(winner)) return "A winning team is required.";
+  if (!isComplete && winner && !["blue", "red"].includes(winner)) return "A valid winning team is required.";
+  if (!["manual", "spin"].includes(matchType)) return "A valid match type is required.";
+  const teamError = validateTeam(blue, "Blue", isComplete) || validateTeam(red, "Red", isComplete);
+  if (teamError) return teamError;
+  const allNames = [...blue, ...red].map((player) => cleanText(player.name, 100).toLowerCase());
+  if (new Set(allNames).size !== 10) return "A player cannot appear on both teams.";
+  return "";
+}
+
+function optionalStat(value) {
+  return value === "" || value === null || value === undefined ? null : Number(value);
+}
+
+async function saveMatchTeams(connection, matchId, blue, red) {
+  for (const [side, teamPlayers] of [["blue", blue], ["red", red]]) {
+    const [team] = await connection.execute("INSERT INTO match_teams (match_id, side) VALUES (?, ?)", [matchId, side]);
+    for (const [index, player] of teamPlayers.entries()) {
+      const playerName = cleanText(player.name, 100);
+      const [found] = await connection.execute("SELECT id FROM players WHERE normalized_name = LOWER(TRIM(?))", [playerName]);
+      await connection.execute("INSERT INTO match_players (match_team_id, player_id, player_name, role, champion_name, rank_at_match, kills, deaths, assists, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [team.insertId, found[0]?.id || null, playerName, player.role, cleanText(player.champion, 80) || null, null, optionalStat(player.kills), optionalStat(player.deaths), optionalStat(player.assists), index]);
+    }
+  }
 }
 
 app.get("/api/health", async (_req, res) => { await db.query("SELECT 1"); res.json({ ok: true }); });
@@ -209,8 +242,13 @@ app.put("/api/players/:id", requireAuth, requireWrite, async (req, res) => {
 app.delete("/api/players/:id", requireAuth, requireWrite, async (req, res) => { if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Invalid player ID." }); const [result] = await db.execute("DELETE FROM players WHERE id = ?", [req.params.id]); if (!result.affectedRows) return res.status(404).json({ error: "Player not found." }); res.status(204).end(); });
 
 app.get("/api/matches", async (req, res) => {
-  const includePrivate = Boolean(await findAdmin(req));
-  const [matches] = await db.query("SELECT id, DATE_FORMAT(played_at, '%Y-%m-%d') AS played_date, winner_team, match_type, notes FROM matches ORDER BY played_at DESC, id DESC LIMIT 500");
+  const admin = await findAdmin(req);
+  const includePrivate = Boolean(admin);
+  const includeDrafts = Boolean(admin && ["owner", "admin"].includes(admin.role));
+  const [matches] = await db.query(`SELECT id, DATE_FORMAT(played_at, '%Y-%m-%d') AS played_date, winner_team, match_type, status, notes
+    FROM matches
+    ${includeDrafts ? "" : "WHERE status = 'complete'"}
+    ORDER BY played_at DESC, id DESC LIMIT 500`);
   if (!matches.length) return res.json([]);
   const [rows] = await db.query("SELECT mt.match_id, mt.side, mp.player_name, mp.role, mp.rank_at_match, mp.champion_name, mp.kills, mp.deaths, mp.assists, mp.sort_order FROM match_players mp JOIN match_teams mt ON mt.id = mp.match_team_id WHERE mt.match_id IN (?) ORDER BY mt.match_id DESC, mp.sort_order", [matches.map((match) => match.id)]);
   const teamsByMatch = new Map();
@@ -220,35 +258,38 @@ app.get("/api/matches", async (req, res) => {
   });
   res.json(matches.map((match) => {
     const teams = teamsByMatch.get(match.id) || { blue: [], red: [] };
-    return { id: String(match.id), date: match.played_date, winner: match.winner_team, matchType: match.match_type, notes: includePrivate ? match.notes || "" : "", ...teams };
+    return { id: String(match.id), date: match.played_date, winner: match.winner_team || "", matchType: match.match_type, status: match.status, notes: includePrivate ? match.notes || "" : "", ...teams };
   }));
 });
-function formatPlayer(row) { return { name: row.player_name, role: row.role, rank: row.rank_at_match || "", champion: row.champion_name || "", kills: row.kills, deaths: row.deaths, assists: row.assists, kda: [row.kills, row.deaths, row.assists].join("/") }; }
+function formatPlayer(row) { const values = [row.kills, row.deaths, row.assists]; return { name: row.player_name, role: row.role, rank: row.rank_at_match || "", champion: row.champion_name || "", kills: row.kills ?? "", deaths: row.deaths ?? "", assists: row.assists ?? "", kda: values.every((value) => value !== null) ? values.join("/") : "-" }; }
 app.post("/api/matches", requireAuth, requireWrite, async (req, res) => {
-  const { date, winner, matchType = "manual", notes = "", blue = [], red = [] } = req.body || {};
-  if (!isValidDate(date)) return res.status(400).json({ error: "A valid match date is required." });
-  if (!["blue", "red"].includes(winner)) return res.status(400).json({ error: "A winning team is required." });
-  if (!["manual", "spin"].includes(matchType)) return res.status(400).json({ error: "A valid match type is required." });
-  const blueError = validateTeam(blue, "Blue");
-  const redError = validateTeam(red, "Red");
-  if (blueError || redError) return res.status(400).json({ error: blueError || redError });
-  const allNames = [...blue, ...red].map((player) => cleanText(player.name, 100).toLowerCase());
-  if (new Set(allNames).size !== 10) return res.status(400).json({ error: "A player cannot appear on both teams." });
+  const inputError = validateMatchInput(req.body);
+  if (inputError) return res.status(400).json({ error: inputError });
+  const { date, winner = "", matchType = "manual", status = "complete", notes = "", blue, red } = req.body;
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-    const [match] = await connection.execute("INSERT INTO matches (played_at, winner_team, match_type, notes, created_by) VALUES (?, ?, ?, ?, ?)", [date, winner, matchType, cleanText(notes, 2000), req.admin.id]);
-    for (const [side, teamPlayers] of [["blue", blue], ["red", red]]) {
-      const [team] = await connection.execute("INSERT INTO match_teams (match_id, side) VALUES (?, ?)", [match.insertId, side]);
-      for (const [index, player] of teamPlayers.entries()) {
-        const playerName = cleanText(player.name, 100);
-        const [found] = await connection.execute("SELECT id FROM players WHERE normalized_name = LOWER(TRIM(?))", [playerName]);
-        await connection.execute("INSERT INTO match_players (match_team_id, player_id, player_name, role, champion_name, rank_at_match, kills, deaths, assists, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [team.insertId, found[0]?.id || null, playerName, player.role, cleanText(player.champion, 80), null, Number(player.kills), Number(player.deaths), Number(player.assists), index]);
-      }
-    }
+    const [match] = await connection.execute("INSERT INTO matches (played_at, winner_team, match_type, status, notes, created_by) VALUES (?, ?, ?, ?, ?, ?)", [date, winner || null, matchType, status, cleanText(notes, 2000), req.admin.id]);
+    await saveMatchTeams(connection, match.insertId, blue, red);
     await connection.commit();
     res.status(201).json({ id: String(match.insertId) });
   } catch (error) { console.error("Match save failed:", error); await connection.rollback(); res.status(500).json({ error: "Could not save match." }); } finally { connection.release(); }
+});
+app.put("/api/matches/:id", requireAuth, requireWrite, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Invalid match ID." });
+  const inputError = validateMatchInput(req.body);
+  if (inputError) return res.status(400).json({ error: inputError });
+  const { date, winner = "", matchType = "manual", status = "complete", notes = "", blue, red } = req.body;
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [result] = await connection.execute("UPDATE matches SET played_at = ?, winner_team = ?, match_type = ?, status = ?, notes = ? WHERE id = ?", [date, winner || null, matchType, status, cleanText(notes, 2000), req.params.id]);
+    if (!result.affectedRows) { await connection.rollback(); return res.status(404).json({ error: "Match not found." }); }
+    await connection.execute("DELETE FROM match_teams WHERE match_id = ?", [req.params.id]);
+    await saveMatchTeams(connection, req.params.id, blue, red);
+    await connection.commit();
+    res.json({ id: String(req.params.id) });
+  } catch (error) { console.error("Match update failed:", error); await connection.rollback(); res.status(500).json({ error: "Could not update match." }); } finally { connection.release(); }
 });
 app.delete("/api/matches/:id", requireAuth, requireWrite, async (req, res) => { if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Invalid match ID." }); const [result] = await db.execute("DELETE FROM matches WHERE id = ?", [req.params.id]); if (!result.affectedRows) return res.status(404).json({ error: "Match not found." }); res.status(204).end(); });
 app.use("/api", (_req, res) => res.status(404).json({ error: "API route not found." }));

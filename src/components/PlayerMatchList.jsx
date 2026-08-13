@@ -21,6 +21,7 @@ function getKda(player) {
 
 export default function PlayerMatchList({ name, matches, champions }) {
   const playerMatches = matches
+    .filter((match) => match.status !== "draft")
     .map((match) => ({ match, entry: findPlayerMatch(match, name) }))
     .filter(({ entry }) => entry);
 
