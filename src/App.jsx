@@ -92,7 +92,9 @@ function App() {
   async function logout() {
     await api.logout();
     setAdmin(null);
+    setMatches((current) => current.filter((match) => match.status !== "draft"));
     setView("dashboard");
+    await loadDatabaseData();
   }
 
   async function savePlayer(player) {

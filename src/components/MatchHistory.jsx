@@ -97,6 +97,9 @@ export default function MatchHistory({
   const [matchPendingDelete, setMatchPendingDelete] = useState(null);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const visibleMatches = canWrite
+    ? matches
+    : matches.filter((match) => match.status !== "draft");
   async function deleteMatch() { if (!matchPendingDelete || isDeleting) return; setDeleteError(""); setIsDeleting(true); try { await onDeleteMatch(matchPendingDelete); setMatchPendingDelete(null); } catch (error) { setDeleteError(error.message || "Could not delete match."); } finally { setIsDeleting(false); } }
   return (
     <div className="panel history-panel">
@@ -112,8 +115,8 @@ export default function MatchHistory({
         </div>}
       </div>
       <div className="history">
-        {matches.length ? (
-          matches.map((match, index) => (
+        {visibleMatches.length ? (
+          visibleMatches.map((match, index) => (
             <MatchCard
               key={match.id || index}
               match={match}
