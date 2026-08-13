@@ -72,7 +72,11 @@ function App() {
   const playerStats = useMemo(() => getPlayerStats(matches), [matches]);
   const rankedPlayers = useMemo(() => rankPlayers(playerStats), [playerStats]);
   const topPlayer = rankedPlayers[0];
-  const playerNames = useMemo(() => [...new Set([...players.filter((player) => player.active).map((player) => player.name), ...matches.flatMap((match) => [...match.blue, ...match.red].map(getPlayerName))])].sort(), [matches, players]);
+  const activePlayerNames = useMemo(
+    () => players.filter((player) => player.active !== false).map((player) => player.name),
+    [players],
+  );
+  const playerNames = useMemo(() => [...new Set([...activePlayerNames, ...matches.flatMap((match) => [...match.blue, ...match.red].map(getPlayerName))])].sort(), [activePlayerNames, matches]);
 
   async function saveMatch(match) {
     if (!canWrite) {
@@ -251,7 +255,7 @@ function App() {
       )}
       {isLoginOpen && <LoginPage onLogin={login} onClose={() => setIsLoginOpen(false)} />}
       {isProfileSettingsOpen && admin && <ProfileSettingsModal admin={admin} onSave={updateProfile} onClose={() => setIsProfileSettingsOpen(false)} />}
-      {isSpinModalOpen && <SpinCustomModal playerNames={players.filter((player) => player.active).map((player) => player.name)} canWrite={canWrite} onClose={() => setIsSpinModalOpen(false)} onUseTeams={useSpunTeams} />}
+      {isSpinModalOpen && <SpinCustomModal playerNames={activePlayerNames} canWrite={canWrite} onClose={() => setIsSpinModalOpen(false)} onUseTeams={useSpunTeams} />}
       <footer></footer>
     </div>
   );

@@ -94,7 +94,7 @@ function requireWrite(req, res, next) {
 
 const playerQuery = "SELECT p.id, p.summoner_name, p.is_active, p.notes, COALESCE((SELECT JSON_OBJECTAGG(prr.role, prr.rank_value) FROM player_role_ranks prr WHERE prr.player_id = p.id), JSON_OBJECT()) AS role_ranks FROM players p ORDER BY p.summoner_name";
 async function getPlayers(includePrivate = false) {
-  const [rows] = await db.query(playerQuery);
+  const [rows] = await db.query(includePrivate ? playerQuery : playerQuery.replace(" ORDER BY", " WHERE p.is_active = 1 ORDER BY"));
   return rows.map((row) => includePrivate
     ? { id: String(row.id), name: row.summoner_name, active: Boolean(row.is_active), notes: row.notes || "", roleRanks: row.role_ranks || {} }
     : { id: String(row.id), name: row.summoner_name });
