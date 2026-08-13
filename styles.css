@@ -12,6 +12,8 @@
   --bar: #edf0f2;
   --button-bg: var(--ink);
   --button-text: #ffffff;
+  --match-blue: var(--blue);
+  --match-red: var(--red);
 }
 
 :root[data-theme="dark"] {
@@ -25,6 +27,8 @@
   --bar: #34414d;
   --button-bg: #8fb8ff;
   --button-text: #101820;
+  --match-blue: #78adff;
+  --match-red: #ff7d7d;
 }
 
 * {
@@ -706,7 +710,10 @@ textarea {
 .match-columns {
   padding: 0 0 6px;
   color: var(--muted);
-  font: 11px "DM Mono";
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 .match-player {
@@ -722,7 +729,8 @@ textarea {
 }
 .match-player-champion {
   overflow: hidden;
-  color: var(--muted);
+  color: color-mix(in srgb, var(--ink) 82%, var(--muted));
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -737,14 +745,16 @@ textarea {
 .role-icon img { width: 22px; height: 22px; object-fit: contain; filter: brightness(0) saturate(100%) invert(58%) sepia(10%) saturate(469%) hue-rotate(167deg) brightness(91%) contrast(87%); }
 .role-icon-fallback { color: var(--muted); font: 12px "DM Mono"; }
 .match-player-kda {
-  font-family: "DM Mono";
-  font-size: 13px;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
 }
 .match-player.blue .match-player-kda {
-  color: var(--blue);
+  color: var(--match-blue);
 }
 .match-player.red .match-player-kda {
-  color: var(--red);
+  color: var(--match-red);
 }
 .match {
   display: grid;
