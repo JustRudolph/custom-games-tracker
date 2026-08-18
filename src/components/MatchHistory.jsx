@@ -112,9 +112,13 @@ export default function MatchHistory({
   const [isDeleting, setIsDeleting] = useState(false);
   const [approvingMatchId, setApprovingMatchId] = useState("");
   const [approvalError, setApprovalError] = useState(null);
-  const visibleMatches = canWrite
+  const visibleMatches = (canWrite
     ? matches
-    : matches.filter((match) => match.status === "complete");
+    : matches.filter((match) => match.status === "complete")
+  ).map((match, index) => ({ match, index })).sort((first, second) => {
+    const priority = { pending: 0, draft: 1, complete: 2 };
+    return (priority[first.match.status] ?? 3) - (priority[second.match.status] ?? 3) || first.index - second.index;
+  }).map(({ match }) => match);
   async function deleteMatch() { if (!matchPendingDelete || isDeleting) return; setDeleteError(""); setIsDeleting(true); try { await onDeleteMatch(matchPendingDelete); setMatchPendingDelete(null); } catch (error) { setDeleteError(error.message || "Could not delete match."); } finally { setIsDeleting(false); } }
   async function approveMatch(match) { if (approvingMatchId) return; setApprovalError(null); setApprovingMatchId(match.id); try { await onApproveMatch(match); } catch (error) { setApprovalError({ id: match.id, message: error.message || "Could not approve submission." }); } finally { setApprovingMatchId(""); } }
   return (
