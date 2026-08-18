@@ -648,6 +648,8 @@ textarea {
 }
 .match-card-top > span { min-width: 0; overflow-wrap: anywhere; }
 .match-card-top > span:first-child { font-variant-numeric: tabular-nums; }
+.match-logged-by { color: var(--muted); font-size: 13px; }
+.edit-match { justify-content: center; padding-inline: 10px; }
 .match-card-top .delete {
   margin-left: auto;
 }
@@ -682,6 +684,7 @@ textarea {
 .collapsed-matchup { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 38px; grid-template-rows: auto 1fr; min-height: 150px; background: var(--white); }
 .collapsed-match-meta { display: flex; grid-column: 1 / 3; gap: 9px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 13px; }
 .collapsed-match-meta strong { color: var(--ink); font-size: 13px; }
+.collapsed-match-meta small { color: var(--muted); font-size: 12px; }
 .collapsed-match-meta span::after { margin-left: 9px; color: var(--muted); content: "·"; }
 .collapsed-matchup.winner-blue { border-left: 5px solid var(--blue); }
 .collapsed-matchup.winner-red { border-left: 5px solid var(--red); }

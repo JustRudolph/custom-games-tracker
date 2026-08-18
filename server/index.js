@@ -346,9 +346,10 @@ app.get("/api/matches", async (req, res) => {
   const admin = await findAdmin(req);
   const includePrivate = Boolean(admin);
   const includeDrafts = Boolean(admin && ["owner", "admin"].includes(admin.role));
-  const [matches] = await db.query(`SELECT id, DATE_FORMAT(played_at, '%Y-%m-%d') AS played_date, winner_team, match_type, status, notes
-    FROM matches
-    ${includeDrafts ? "" : "WHERE status = 'complete'"}
+  const [matches] = await db.query(`SELECT m.id, DATE_FORMAT(m.played_at, '%Y-%m-%d') AS played_date, m.winner_team, m.match_type, m.status, m.notes, a.display_name AS created_by_name
+    FROM matches m
+    LEFT JOIN admin_accounts a ON a.id = m.created_by
+    ${includeDrafts ? "" : "WHERE m.status = 'complete'"}
     ORDER BY played_at DESC, id DESC LIMIT 500`);
   if (!matches.length) return res.json([]);
   const [rows] = await db.query("SELECT mt.match_id, mt.side, mp.player_name, mp.role, mp.rank_at_match, mp.champion_name, mp.kills, mp.deaths, mp.assists, mp.sort_order FROM match_players mp JOIN match_teams mt ON mt.id = mp.match_team_id WHERE mt.match_id IN (?) ORDER BY mt.match_id DESC, mp.sort_order", [matches.map((match) => match.id)]);
@@ -359,7 +360,7 @@ app.get("/api/matches", async (req, res) => {
   });
   res.json(matches.map((match) => {
     const teams = teamsByMatch.get(match.id) || { blue: [], red: [] };
-    return { id: String(match.id), date: match.played_date, winner: match.winner_team || "", matchType: match.match_type, status: match.status, notes: includePrivate ? match.notes || "" : "", ...teams };
+    return { id: String(match.id), date: match.played_date, winner: match.winner_team || "", matchType: match.match_type, status: match.status, loggedBy: match.created_by_name || "Guest", notes: includePrivate ? match.notes || "" : "", ...teams };
   }));
 });
 function formatPlayer(row) { const values = [row.kills, row.deaths, row.assists]; return { name: row.player_name, role: row.role, rank: row.rank_at_match || "", champion: row.champion_name || "", kills: row.kills ?? "", deaths: row.deaths ?? "", assists: row.assists ?? "", kda: values.every((value) => value !== null) ? values.join("/") : "-" }; }
