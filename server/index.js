@@ -92,6 +92,23 @@ function requireWrite(req, res, next) {
   next();
 }
 
+function requireOwner(req, res, next) {
+  if (req.admin.role !== "owner") return res.status(403).json({ error: "Owner access required." });
+  next();
+}
+
+function accountPayload(row) {
+  return {
+    id: String(row.id),
+    username: row.username,
+    displayName: row.display_name,
+    role: row.role,
+    active: Boolean(row.is_active),
+    lastLoginAt: row.last_login_at,
+    createdAt: row.created_at,
+  };
+}
+
 const playerQuery = "SELECT p.id, p.summoner_name, p.is_active, p.notes, COALESCE((SELECT JSON_OBJECTAGG(prr.role, prr.rank_value) FROM player_role_ranks prr WHERE prr.player_id = p.id), JSON_OBJECT()) AS role_ranks FROM players p ORDER BY p.summoner_name";
 async function getPlayers(includePrivate = false) {
   const [rows] = await db.query(includePrivate ? playerQuery : playerQuery.replace(" ORDER BY", " WHERE p.is_active = 1 ORDER BY"));
@@ -219,6 +236,75 @@ app.patch("/api/auth/profile", requireAuth, async (req, res) => {
   res.json({ id: String(req.admin.id), username: req.admin.username, displayName, role: req.admin.role });
 });
 app.post("/api/auth/logout", async (req, res) => { const token = getSessionToken(req); if (token) await db.execute("DELETE FROM admin_sessions WHERE token_hash = ?", [hashToken(token)]); res.setHeader("Set-Cookie", clearSessionCookie()); res.status(204).end(); });
+
+app.get("/api/accounts", requireAuth, requireOwner, async (_req, res) => {
+  const [rows] = await db.execute("SELECT id, username, display_name, role, is_active, last_login_at, created_at FROM admin_accounts ORDER BY FIELD(role, 'owner', 'admin', 'viewer'), display_name");
+  res.json(rows.map(accountPayload));
+});
+
+app.post("/api/accounts", requireAuth, requireOwner, async (req, res) => {
+  const username = String(req.body?.username || "").trim().toLowerCase();
+  const displayName = String(req.body?.displayName || "").trim();
+  const password = String(req.body?.password || "");
+  const role = String(req.body?.role || "admin");
+  if (!/^[a-z0-9_.-]{3,32}$/.test(username)) return res.status(400).json({ error: "Username must be 3-32 characters using lowercase letters, numbers, dots, underscores, or hyphens." });
+  if (displayName.length < 2 || displayName.length > 120) return res.status(400).json({ error: "Display name must be between 2 and 120 characters." });
+  if (password.length < 12 || password.length > 256) return res.status(400).json({ error: "Password must be between 12 and 256 characters." });
+  if (!["owner", "admin", "viewer"].includes(role)) return res.status(400).json({ error: "Invalid account role." });
+  try {
+    const passwordHash = await hashPassword(password);
+    const [result] = await db.execute("INSERT INTO admin_accounts (username, display_name, password_hash, role) VALUES (?, ?, ?, ?)", [username, displayName, passwordHash, role]);
+    const [rows] = await db.execute("SELECT id, username, display_name, role, is_active, last_login_at, created_at FROM admin_accounts WHERE id = ?", [result.insertId]);
+    res.status(201).json(accountPayload(rows[0]));
+  } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "That username is already in use." });
+    throw error;
+  }
+});
+
+app.patch("/api/accounts/:id", requireAuth, requireOwner, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Invalid account ID." });
+  const accountId = Number(req.params.id);
+  const displayName = String(req.body?.displayName || "").trim();
+  const password = String(req.body?.password || "");
+  const role = String(req.body?.role || "");
+  const active = req.body?.active;
+  if (displayName.length < 2 || displayName.length > 120) return res.status(400).json({ error: "Display name must be between 2 and 120 characters." });
+  if (password && (password.length < 12 || password.length > 256)) return res.status(400).json({ error: "Password must be between 12 and 256 characters." });
+  if (!["owner", "admin", "viewer"].includes(role)) return res.status(400).json({ error: "Invalid account role." });
+  if (typeof active !== "boolean") return res.status(400).json({ error: "Account status must be true or false." });
+  if (accountId === Number(req.admin.id) && (role !== "owner" || !active)) return res.status(400).json({ error: "You cannot change or deactivate your own owner account." });
+  const [existingRows] = await db.execute("SELECT id, role, is_active FROM admin_accounts WHERE id = ?", [accountId]);
+  const existing = existingRows[0];
+  if (!existing) return res.status(404).json({ error: "Account not found." });
+  if (existing.role === "owner" && existing.is_active && (role !== "owner" || !active)) {
+    const [ownerRows] = await db.execute("SELECT COUNT(*) AS count FROM admin_accounts WHERE role = 'owner' AND is_active = TRUE");
+    if (Number(ownerRows[0].count) <= 1) return res.status(400).json({ error: "At least one active owner account must remain." });
+  }
+  const passwordHash = password ? await hashPassword(password) : null;
+  await db.execute("UPDATE admin_accounts SET display_name = ?, role = ?, is_active = ?, password_hash = COALESCE(?, password_hash) WHERE id = ?", [displayName, role, active, passwordHash, accountId]);
+  if (passwordHash) {
+    if (accountId === Number(req.admin.id)) await db.execute("DELETE FROM admin_sessions WHERE admin_id = ? AND token_hash <> ?", [accountId, hashToken(getSessionToken(req))]);
+    else await db.execute("DELETE FROM admin_sessions WHERE admin_id = ?", [accountId]);
+  }
+  const [rows] = await db.execute("SELECT id, username, display_name, role, is_active, last_login_at, created_at FROM admin_accounts WHERE id = ?", [accountId]);
+  res.json(accountPayload(rows[0]));
+});
+
+app.delete("/api/accounts/:id", requireAuth, requireOwner, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Invalid account ID." });
+  const accountId = Number(req.params.id);
+  if (accountId === Number(req.admin.id)) return res.status(400).json({ error: "You cannot delete your own account." });
+  const [rows] = await db.execute("SELECT role, is_active FROM admin_accounts WHERE id = ?", [accountId]);
+  const account = rows[0];
+  if (!account) return res.status(404).json({ error: "Account not found." });
+  if (account.role === "owner" && account.is_active) {
+    const [ownerRows] = await db.execute("SELECT COUNT(*) AS count FROM admin_accounts WHERE role = 'owner' AND is_active = TRUE");
+    if (Number(ownerRows[0].count) <= 1) return res.status(400).json({ error: "At least one active owner account must remain." });
+  }
+  await db.execute("DELETE FROM admin_accounts WHERE id = ?", [accountId]);
+  res.status(204).end();
+});
 
 app.get("/api/players", async (req, res) => res.json(await getPlayers(Boolean(await findAdmin(req)))));
 app.post("/api/players", requireAuth, requireWrite, async (req, res) => {

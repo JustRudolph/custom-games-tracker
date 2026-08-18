@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 export default function AppHeader({
   onOpenDashboard,
   onOpenPlayers,
+  onOpenAccounts,
   onOpenLeaderboard,
   playerSearch,
   onPlayerSearch,
@@ -88,6 +89,7 @@ export default function AppHeader({
           {isSearchFocused && playerSearch.trim() && <div className="header-player-results">{playerSearchResults.length ? playerSearchResults.map(([name]) => <button type="button" key={name} onMouseDown={(event) => event.preventDefault()} onClick={() => { setIsSearchFocused(false); onSelectPlayer(name); }}>{name}</button>) : <span>No player found.</span>}</div>}
         </div>
         {canWrite && <button className="ghost-btn" onClick={() => runAction(onOpenPlayers)}>Players</button>}
+        {admin?.role === "owner" && <button className="ghost-btn" onClick={() => runAction(onOpenAccounts)}>Accounts</button>}
         <button className="ghost-btn" onClick={() => runAction(onOpenLeaderboard)}>Leaderboard</button>
         <button
           className="theme-toggle"

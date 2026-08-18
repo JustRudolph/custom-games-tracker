@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import AppHeader from "./components/AppHeader.jsx";
+import AccountsDashboard from "./components/AccountsDashboard.jsx";
 import Hero from "./components/Hero.jsx";
 import FullLeaderboard from "./components/FullLeaderboard.jsx";
 import MatchForm from "./components/MatchForm.jsx";
@@ -28,6 +29,7 @@ function App() {
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [players, setPlayers] = useState([]);
+  const [accounts, setAccounts] = useState([]);
   const [dataError, setDataError] = useState("");
   const [dataDragonChampions, setDataDragonChampions] = useState([]);
   const [isChampionLibraryLoading, setIsChampionLibraryLoading] = useState(true);
@@ -98,6 +100,12 @@ function App() {
     return { ...match, ...saved };
   }
 
+  async function loadAccounts() {
+    const loadedAccounts = await api.getAccounts();
+    setAccounts(loadedAccounts);
+    setDataError("");
+  }
+
   async function login(credentials) {
     const authenticatedAdmin = await api.login(credentials);
     setAdmin(authenticatedAdmin);
@@ -133,6 +141,17 @@ function App() {
     setPlayers((current) => current.filter((player) => player.id !== id));
   }
 
+  async function saveAccount(account) {
+    const saved = account.id ? await api.updateAccount(account) : await api.createAccount(account);
+    setAccounts((current) => account.id ? current.map((item) => item.id === saved.id ? saved : item) : [...current, saved]);
+    return saved;
+  }
+
+  async function deleteAccount(id) {
+    await api.deleteAccount(id);
+    setAccounts((current) => current.filter((account) => account.id !== id));
+  }
+
   async function updateProfile(profile) {
     const updatedAdmin = await api.updateProfile(profile);
     setAdmin(updatedAdmin);
@@ -152,6 +171,7 @@ function App() {
 
   const toggleTheme = () => setTheme((current) => (current === "light" ? "dark" : "light"));
   const canWrite = admin?.role === "owner" || admin?.role === "admin";
+  const isOwner = admin?.role === "owner";
 
   const playerSearchResults = useMemo(() => {
     const query = playerSearch.trim().toLowerCase();
@@ -186,6 +206,7 @@ function App() {
       <AppHeader
         onOpenDashboard={() => setView("dashboard")}
         onOpenPlayers={async () => { await loadDatabaseData(); setView("players"); }}
+        onOpenAccounts={async () => { try { await loadAccounts(); setView("accounts"); } catch (error) { setDataError(error.message); setView("accounts"); } }}
         onOpenLeaderboard={() => setView("leaderboard")}
         playerSearch={playerSearch}
         onPlayerSearch={setPlayerSearch}
@@ -199,7 +220,9 @@ function App() {
         theme={theme}
         onToggleTheme={toggleTheme}
       />
-      {view === "players" && canWrite ? (
+      {view === "accounts" && isOwner ? (
+        <AccountsDashboard accounts={accounts} currentAdminId={admin.id} dataError={dataError} onRetry={loadAccounts} onSaveAccount={saveAccount} onDeleteAccount={deleteAccount} onBack={() => setView("dashboard")} />
+      ) : view === "players" && canWrite ? (
         <PlayerDashboard players={players} dataError={dataError} canWrite={canWrite} onRetry={loadDatabaseData} onSavePlayer={savePlayer} onDeletePlayer={deletePlayer} onBack={() => setView("dashboard")} />
       ) : view === "playerLookup" ? (
         <PlayerLookup players={rankedPlayers} matches={matches} champions={dataDragonChampions} selectedName={selectedPlayerName} dataError={dataError} onRetry={loadDatabaseData} onBack={() => setView("dashboard")} />
