@@ -14,8 +14,8 @@ function PlayerLine({ player, team, champions }) {
 
   return (
     <div className={"match-player " + team}>
-      <span className="match-player-name">{details.name}</span>
       <RoleIcon role={details.role} />
+      <span className="match-player-name">{details.name}</span>
       <span className="match-player-champion">{champion && <img src={champion.icon} alt="" />}<span>{details.champion}</span></span>
       <span className="match-player-kda">{details.kda}</span>
     </div>
@@ -33,8 +33,8 @@ function TeamSection({ match, team, champions }) {
         <span>({teamName})</span>
       </div>
       <div className="match-columns">
-        <span>Name</span>
         <span>Role</span>
+        <span>Name</span>
         <span>Champion</span>
         <span>KDA</span>
       </div>

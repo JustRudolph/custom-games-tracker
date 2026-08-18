@@ -725,7 +725,7 @@ textarea {
 .match-player {
   display: grid;
   grid-template-columns:
-    minmax(88px, 1.35fr) minmax(62px, 0.9fr)
+    minmax(62px, 0.9fr) minmax(88px, 1.35fr)
     minmax(100px, 1.2fr) minmax(62px, 0.8fr);
   gap: 10px;
   align-items: center;
@@ -1250,7 +1250,7 @@ footer {
   .match-columns,
   .match-player {
     grid-template-columns:
-      minmax(62px, 1.1fr) minmax(48px, 0.75fr)
+      minmax(48px, 0.75fr) minmax(62px, 1.1fr)
       minmax(72px, 1fr) minmax(46px, 0.7fr);
     gap: 6px;
   }
@@ -1317,7 +1317,8 @@ footer {
   .compact-expand { grid-column: 2; grid-row: 1 / 4; border-left: 1px solid var(--line); }
   .match-team-section { padding-inline: 9px; }
   .match-columns,
-  .match-player { grid-template-columns: minmax(58px, 1fr) 28px minmax(62px, 1fr) 46px; gap: 5px; }
+  .match-columns,
+  .match-player { grid-template-columns: 40px minmax(58px, 1fr) minmax(62px, 1fr) 46px; gap: 5px; }
   .match-columns { font-size: 9px; }
   .match-player { font-size: 12px; }
   .match-player-champion img { width: 26px; height: 26px; }
