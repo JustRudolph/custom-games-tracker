@@ -1303,9 +1303,7 @@ footer {
   .full-leaderboard-head h1 { font-size: 34px; }
   .full-leaderboard-head .theme-toggle { align-self: stretch; }
   .leaderboard-table-head,
-  .leaderboard-table-row { grid-template-columns: 36px minmax(86px, 1fr) 58px; gap: 7px; padding: 12px 10px; }
-  .leaderboard-table-head span:nth-child(5),
-  .leaderboard-table-row span:nth-child(5) { display: none; }
+  .leaderboard-table-row { grid-template-columns: 36px minmax(86px, 1fr) 58px 58px; gap: 7px; padding: 12px 10px; }
   .directory-head { align-items: stretch; flex-direction: column; }
   .directory-head input { max-width: none; }
   .add-player-button { width: 100%; margin-left: 0; }
