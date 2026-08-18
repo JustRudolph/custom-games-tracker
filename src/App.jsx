@@ -31,6 +31,7 @@ function App() {
   const [players, setPlayers] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [dataError, setDataError] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [dataDragonChampions, setDataDragonChampions] = useState([]);
   const [isChampionLibraryLoading, setIsChampionLibraryLoading] = useState(true);
   const [championLibraryError, setChampionLibraryError] = useState("");
@@ -98,6 +99,16 @@ function App() {
     else saved = await api.createMatch(match);
     await loadDatabaseData();
     return { ...match, ...saved };
+  }
+
+  async function refreshDatabaseData() {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await loadDatabaseData();
+    } finally {
+      setIsRefreshing(false);
+    }
   }
 
   async function loadAccounts() {
@@ -262,6 +273,8 @@ function App() {
                 champions={dataDragonChampions}
                 canWrite={canWrite}
                 isOwner={isOwner}
+                onRefresh={refreshDatabaseData}
+                isRefreshing={isRefreshing}
               />
             </section>
             <PlayerInsights

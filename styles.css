@@ -549,6 +549,7 @@ button:disabled {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 370px);
   gap: 18px;
+  align-items: start;
   margin-top: 42px;
 }
 .dashboard-actions {
@@ -1354,6 +1355,7 @@ textarea {
 }
 .history-tools {
   display: flex;
+  gap: 8px;
   align-items: center;
 }
 .history {
@@ -1361,6 +1363,11 @@ textarea {
   gap: 10px;
   padding: 10px;
   background: var(--paper);
+}
+.show-more-matches {
+  width: calc(100% - 20px);
+  justify-content: center;
+  margin: 0 10px 10px;
 }
 .empty {
   padding: 65px 30px;
@@ -1938,7 +1945,7 @@ textarea {
 }
 
 .insights-panel {
-  align-self: stretch;
+  align-self: start;
   margin: 0;
   padding: 27px;
 }

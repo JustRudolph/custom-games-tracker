@@ -107,7 +107,10 @@ export default function MatchHistory({
   champions,
   canWrite,
   isOwner,
+  onRefresh,
+  isRefreshing,
 }) {
+  const [matchLimit, setMatchLimit] = useState(10);
   const [matchPendingDelete, setMatchPendingDelete] = useState(null);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -120,6 +123,7 @@ export default function MatchHistory({
     const priority = { pending: 0, draft: 1, complete: 2 };
     return (priority[first.match.status] ?? 3) - (priority[second.match.status] ?? 3) || first.index - second.index;
   }).map(({ match }) => match);
+  const shownMatches = visibleMatches.slice(0, matchLimit);
   async function deleteMatch() { if (!matchPendingDelete || isDeleting) return; setDeleteError(""); setIsDeleting(true); try { await onDeleteMatch(matchPendingDelete); setMatchPendingDelete(null); } catch (error) { setDeleteError(error.message || "Could not delete match."); } finally { setIsDeleting(false); } }
   async function approveMatch(match) { if (approvingMatchId) return; setApprovalError(null); setApprovingMatchId(match.id); try { await onApproveMatch(match); } catch (error) { setApprovalError({ id: match.id, message: error.message || "Could not approve submission." }); } finally { setApprovingMatchId(""); } }
   return (
@@ -129,15 +133,14 @@ export default function MatchHistory({
           <p className="eyebrow">MATCH ARCHIVE</p>
           <h2>Match history</h2>
         </div>
-        {canWrite && <div className="history-tools">
-          <button onClick={onExport} className="ghost-btn">
-            Export JSON
-          </button>
-        </div>}
+        <div className="history-tools">
+          <button onClick={onRefresh} className="ghost-btn" type="button" disabled={isRefreshing}>{isRefreshing ? "Updating..." : "Update"}</button>
+          {canWrite && <button onClick={onExport} className="ghost-btn">Export JSON</button>}
+        </div>
       </div>
       <div className="history">
         {visibleMatches.length ? (
-          visibleMatches.map((match, index) => (
+          shownMatches.map((match, index) => (
             <MatchCard
               key={match.id || index}
               match={match}
@@ -155,6 +158,7 @@ export default function MatchHistory({
           <div className="empty">{canWrite ? "No matches have been logged yet. Log your first custom when you're ready." : "No matches have been logged yet."}</div>
         )}
       </div>
+      {visibleMatches.length > matchLimit && <button className="secondary-btn show-more-matches" type="button" onClick={() => setMatchLimit((current) => current + 10)}>Show more matches ({visibleMatches.length - matchLimit} remaining)</button>}
       {matchPendingDelete && <ConfirmationModal eyebrow="DELETE MATCH" title={`Delete match from ${matchPendingDelete.date}?`} message="This removes the match and its player statistics permanently." confirmLabel="Delete match" isWorking={isDeleting} error={deleteError} onCancel={() => setMatchPendingDelete(null)} onConfirm={deleteMatch} />}
     </div>
   );
