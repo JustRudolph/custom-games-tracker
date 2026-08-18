@@ -22,6 +22,8 @@ Apply `008_match_drafts.sql` to allow admins to save team rosters before enterin
 
 Apply `009_guest_match_submissions.sql` to add pending guest submissions. Pending matches remain private and do not affect statistics until an owner or admin approves them.
 
+Apply `010_match_stats_images.sql` to allow guests to attach a PNG, JPG, or WebP screenshot of the custom stats to a submission.
+
 PowerShell setup:
 
     Get-Content -Raw .\db\migrations\004_admin_sessions.sql | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p --default-character-set=utf8mb4

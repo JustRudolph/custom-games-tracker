@@ -39,7 +39,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(cors({ origin: clientOrigin, credentials: true, methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] }));
-app.use(express.json({ limit: "100kb" }));
+app.use(express.json({ limit: "4mb" }));
 app.use("/api", (req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   const now = Date.now();
@@ -125,6 +125,14 @@ function cleanText(value, maxLength) {
   return String(value || "").trim().slice(0, maxLength);
 }
 
+function validateStatsImage(value) {
+  if (!value) return "";
+  const image = String(value);
+  if (image.length > 3_000_000) return "The stats image must be 2 MB or smaller.";
+  if (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=\r\n]+$/.test(image)) return "The stats image must be a PNG, JPG, or WebP image.";
+  return "";
+}
+
 function validateTeam(teamPlayers, side, isComplete) {
   if (!Array.isArray(teamPlayers) || teamPlayers.length !== 5) return `${side} team must contain exactly five players.`;
   const names = teamPlayers.map((player) => cleanText(player?.name, 100).toLowerCase());
@@ -141,13 +149,15 @@ function validateTeam(teamPlayers, side, isComplete) {
 }
 
 function validateMatchInput(body) {
-  const { date, winner = "", matchType = "manual", status = "complete", blue = [], red = [] } = body || {};
+  const { date, winner = "", matchType = "manual", status = "complete", blue = [], red = [], statsImage = "" } = body || {};
   const requiresCompleteDetails = status !== "draft";
   if (!isValidDate(date)) return "A valid match date is required.";
   if (!["draft", "pending", "complete"].includes(status)) return "A valid match status is required.";
   if (requiresCompleteDetails && !["blue", "red"].includes(winner)) return "A winning team is required.";
   if (!requiresCompleteDetails && winner && !["blue", "red"].includes(winner)) return "A valid winning team is required.";
   if (!["manual", "spin"].includes(matchType)) return "A valid match type is required.";
+  const statsImageError = validateStatsImage(statsImage);
+  if (statsImageError) return statsImageError;
   const teamError = validateTeam(blue, "Blue", requiresCompleteDetails) || validateTeam(red, "Red", requiresCompleteDetails);
   if (teamError) return teamError;
   const allNames = [...blue, ...red].map((player) => cleanText(player.name, 100).toLowerCase());
@@ -346,7 +356,7 @@ app.get("/api/matches", async (req, res) => {
   const admin = await findAdmin(req);
   const includePrivate = Boolean(admin);
   const includeDrafts = Boolean(admin && ["owner", "admin"].includes(admin.role));
-  const [matches] = await db.query(`SELECT m.id, DATE_FORMAT(m.played_at, '%Y-%m-%d') AS played_date, m.winner_team, m.match_type, m.status, m.notes, a.display_name AS created_by_name
+  const [matches] = await db.query(`SELECT m.id, DATE_FORMAT(m.played_at, '%Y-%m-%d') AS played_date, m.winner_team, m.match_type, m.status, m.notes, m.stats_image, a.display_name AS created_by_name
     FROM matches m
     LEFT JOIN admin_accounts a ON a.id = m.created_by
     ${includeDrafts ? "" : "WHERE m.status = 'complete'"}
@@ -360,7 +370,7 @@ app.get("/api/matches", async (req, res) => {
   });
   res.json(matches.map((match) => {
     const teams = teamsByMatch.get(match.id) || { blue: [], red: [] };
-    return { id: String(match.id), date: match.played_date, winner: match.winner_team || "", matchType: match.match_type, status: match.status, loggedBy: match.created_by_name || "Guest", notes: includePrivate ? match.notes || "" : "", ...teams };
+    return { id: String(match.id), date: match.played_date, winner: match.winner_team || "", matchType: match.match_type, status: match.status, loggedBy: match.created_by_name || "Guest", statsImage: includePrivate ? match.stats_image || "" : "", notes: includePrivate ? match.notes || "" : "", ...teams };
   }));
 });
 function formatPlayer(row) { const values = [row.kills, row.deaths, row.assists]; return { name: row.player_name, role: row.role, rank: row.rank_at_match || "", champion: row.champion_name || "", kills: row.kills ?? "", deaths: row.deaths ?? "", assists: row.assists ?? "", kda: values.every((value) => value !== null) ? values.join("/") : "-" }; }
@@ -368,11 +378,11 @@ app.post("/api/match-submissions", limitGuestSubmissions, async (req, res) => {
   const input = { ...req.body, status: "pending" };
   const inputError = validateMatchInput(input);
   if (inputError) return res.status(400).json({ error: inputError });
-  const { date, winner, matchType = "manual", notes = "", blue, red } = input;
+  const { date, winner, matchType = "manual", notes = "", statsImage = "", blue, red } = input;
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-    const [match] = await connection.execute("INSERT INTO matches (played_at, winner_team, match_type, status, notes, created_by) VALUES (?, ?, ?, 'pending', ?, NULL)", [date, winner, matchType, cleanText(notes, 2000)]);
+    const [match] = await connection.execute("INSERT INTO matches (played_at, winner_team, match_type, status, notes, stats_image, created_by) VALUES (?, ?, ?, 'pending', ?, ?, NULL)", [date, winner, matchType, cleanText(notes, 2000), statsImage || null]);
     await saveMatchTeams(connection, match.insertId, blue, red);
     await connection.commit();
     res.status(201).json({ id: String(match.insertId), status: "pending" });
@@ -382,11 +392,11 @@ app.post("/api/matches", requireAuth, requireWrite, async (req, res) => {
   const input = req.query.mode === "draft" ? { ...req.body, status: "draft" } : req.body;
   const inputError = validateMatchInput(input);
   if (inputError) return res.status(400).json({ error: inputError });
-  const { date, winner = "", matchType = "manual", status = "complete", notes = "", blue, red } = input;
+  const { date, winner = "", matchType = "manual", status = "complete", notes = "", statsImage = "", blue, red } = input;
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-    const [match] = await connection.execute("INSERT INTO matches (played_at, winner_team, match_type, status, notes, created_by) VALUES (?, ?, ?, ?, ?, ?)", [date, winner || null, matchType, status, cleanText(notes, 2000), req.admin.id]);
+    const [match] = await connection.execute("INSERT INTO matches (played_at, winner_team, match_type, status, notes, stats_image, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)", [date, winner || null, matchType, status, cleanText(notes, 2000), statsImage || null, req.admin.id]);
     await saveMatchTeams(connection, match.insertId, blue, red);
     await connection.commit();
     res.status(201).json({ id: String(match.insertId) });
@@ -403,11 +413,11 @@ app.put("/api/matches/:id", requireAuth, requireWrite, async (req, res) => {
   const input = req.query.mode === "draft" ? { ...req.body, status: "draft" } : req.body;
   const inputError = validateMatchInput(input);
   if (inputError) return res.status(400).json({ error: inputError });
-  const { date, winner = "", matchType = "manual", status = "complete", notes = "", blue, red } = input;
+  const { date, winner = "", matchType = "manual", status = "complete", notes = "", statsImage = "", blue, red } = input;
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-    const [result] = await connection.execute("UPDATE matches SET played_at = ?, winner_team = ?, match_type = ?, status = ?, notes = ? WHERE id = ?", [date, winner || null, matchType, status, cleanText(notes, 2000), req.params.id]);
+    const [result] = await connection.execute("UPDATE matches SET played_at = ?, winner_team = ?, match_type = ?, status = ?, notes = ?, stats_image = ? WHERE id = ?", [date, winner || null, matchType, status, cleanText(notes, 2000), statsImage || null, req.params.id]);
     if (!result.affectedRows) { await connection.rollback(); return res.status(404).json({ error: "Match not found." }); }
     await connection.execute("DELETE FROM match_teams WHERE match_id = ?", [req.params.id]);
     await saveMatchTeams(connection, req.params.id, blue, red);

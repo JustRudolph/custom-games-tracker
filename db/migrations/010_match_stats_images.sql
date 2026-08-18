@@ -1,0 +1,2 @@
+ALTER TABLE matches
+  ADD COLUMN stats_image MEDIUMTEXT NULL AFTER notes;
