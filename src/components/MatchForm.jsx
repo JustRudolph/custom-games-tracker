@@ -166,6 +166,7 @@ export default function MatchForm({
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStatsImageOpen, setIsStatsImageOpen] = useState(false);
+  const [statsImageFileName, setStatsImageFileName] = useState("");
   const submitStatus =
     canWrite && form.status !== "pending" ? "complete" : "pending";
   function readStatsImage(file) {
@@ -176,6 +177,8 @@ export default function MatchForm({
       return setError("The stats image must be 2 MB or smaller.");
     const reader = new FileReader();
     reader.onload = () =>
+      setStatsImageFileName(file.name || "Pasted screenshot");
+    reader.onloadend = () =>
       setForm((current) => ({
         ...current,
         statsImage: String(reader.result || ""),
@@ -425,20 +428,26 @@ export default function MatchForm({
             <div className="stats-image-field">
               <label>{canWrite ? "Submitted stats screenshot" : "Custom stats screenshot"}</label>
               {!canWrite && <>
+                <label className="stats-upload-trigger" htmlFor="stats-image-upload">
+                  <strong>Upload screenshot</strong>
+                  <span>PNG, JPG, or WebP up to 2 MB</span>
+                </label>
                 <input
+                  className="stats-image-input"
                   id="stats-image-upload"
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
                   onChange={(event) => readStatsImage(event.target.files?.[0])}
                 />
-                <span>Optional. Upload an image or paste one anywhere in this form.</span>
+                <span>Optional. You can also paste an image anywhere in this form.</span>
+                {statsImageFileName && <span className="stats-image-file-name">Selected: {statsImageFileName}</span>}
               </>}
               {form.statsImage && (
                 <div className="stats-image-preview">
                   <button className="stats-image-button" type="button" onClick={() => setIsStatsImageOpen(true)} aria-label="Enlarge custom stats screenshot">
                     <img src={form.statsImage} alt="Custom stats preview" />
                   </button>
-                  {!canWrite && <button className="ghost-btn" type="button" onClick={() => setForm({ ...form, statsImage: "" })}>Remove image</button>}
+                  {!canWrite && <button className="ghost-btn" type="button" onClick={() => { setForm({ ...form, statsImage: "" }); setStatsImageFileName(""); }}>Remove image</button>}
                 </div>
               )}
             </div>

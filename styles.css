@@ -1648,14 +1648,24 @@ textarea {
   color: var(--muted);
   font-size: 13px;
 }
-.stats-image-field input[type="file"] {
-  width: 100%;
-  padding: 10px;
-  border: 1px dashed var(--line);
-  background: var(--soft);
+.stats-upload-trigger {
+  display: flex;
+  min-height: 58px;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+  padding: 10px 14px;
+  border: 1px dashed color-mix(in srgb, var(--blue) 65%, var(--line));
+  background: color-mix(in srgb, var(--blue) 7%, var(--soft));
   color: var(--ink);
-  font: 14px "Segoe UI";
+  cursor: pointer;
 }
+.stats-upload-trigger:hover { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 12%, var(--soft)); }
+.stats-upload-trigger strong { font-size: 15px; }
+.stats-upload-trigger span { color: var(--muted); font-size: 12px; }
+.stats-image-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; clip-path: inset(50%); }
+.stats-image-input:focus-visible + span { outline: 2px solid var(--blue); outline-offset: 3px; }
+.stats-image-file-name { font-weight: 600; }
 .stats-image-preview {
   display: grid;
   gap: 8px;
