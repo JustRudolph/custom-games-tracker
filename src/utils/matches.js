@@ -118,6 +118,15 @@ export function getPlayerBestPerformance(matches, playerName) {
   return bestPerformance;
 }
 
+function getRoleScore(roleStats) {
+  if (!roleStats?.games) return 0;
+  const winRate = (roleStats.wins / roleStats.games) * 100;
+  const confidence = roleStats.games / (roleStats.games + 3);
+  const reliableWinRate = 50 + (winRate - 50) * confidence;
+  const experience = (1 - Math.exp(-roleStats.games / 6)) * 100;
+  return reliableWinRate * 0.8 + experience * 0.2;
+}
+
 export function splitPlayerNames(value) {
   return parsePlayers(value)
     .map((player) => player.name)
@@ -165,7 +174,9 @@ export function getPlayerStats(matches) {
       second.wins / second.games - first.wins / first.games || second.games - first.games,
     )[0]?.[0] || "-";
     stat.bestRole = Object.entries(stat.roles).sort(([, first], [, second]) =>
-      second.wins / second.games - first.wins / first.games || second.games - first.games,
+      getRoleScore(second) - getRoleScore(first) ||
+      second.games - first.games ||
+      second.wins - first.wins,
     )[0]?.[0] || "-";
   });
 
