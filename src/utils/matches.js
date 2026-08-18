@@ -120,11 +120,20 @@ export function getPlayerBestPerformance(matches, playerName) {
 
 function getRoleScore(roleStats) {
   if (!roleStats?.games) return 0;
+
+  // Shrink small samples toward a neutral 50 so one excellent game cannot
+  // outweigh a role the player has performed in consistently.
   const winRate = (roleStats.wins / roleStats.games) * 100;
-  const confidence = roleStats.games / (roleStats.games + 3);
+  const confidence = roleStats.games / (roleStats.games + 4);
   const reliableWinRate = 50 + (winRate - 50) * confidence;
-  const experience = (1 - Math.exp(-roleStats.games / 6)) * 100;
-  return reliableWinRate * 0.8 + experience * 0.2;
+  const averageKda = (roleStats.kills + roleStats.assists) / Math.max(1, roleStats.deaths);
+  // A KDA of 2 is the neutral midpoint; cap the input so an outlier cannot
+  // dominate the role decision.
+  const kdaScore = (Math.min(averageKda, 8) / (Math.min(averageKda, 8) + 2)) * 100;
+  const reliableKda = 50 + (kdaScore - 50) * confidence;
+  const experience = (1 - Math.exp(-roleStats.games / 8)) * 100;
+
+  return reliableWinRate * 0.45 + reliableKda * 0.3 + experience * 0.25;
 }
 
 export function splitPlayerNames(value) {
@@ -159,9 +168,13 @@ export function getPlayerStats(matches) {
       }
 
       if (details.role) {
-        stat.roles[details.role] ??= { games: 0, wins: 0 };
-        stat.roles[details.role].games += 1;
-        stat.roles[details.role].wins += won ? 1 : 0;
+        stat.roles[details.role] ??= { games: 0, wins: 0, kills: 0, deaths: 0, assists: 0 };
+        const roleStat = stat.roles[details.role];
+        roleStat.games += 1;
+        roleStat.wins += won ? 1 : 0;
+        roleStat.kills += Number.isFinite(kills) ? kills : 0;
+        roleStat.deaths += Number.isFinite(deaths) ? deaths : 0;
+        roleStat.assists += Number.isFinite(assists) ? assists : 0;
       }
     }));
 
@@ -173,7 +186,12 @@ export function getPlayerStats(matches) {
     stat.bestChampion = Object.entries(stat.champions).sort(([, first], [, second]) =>
       second.wins / second.games - first.wins / first.games || second.games - first.games,
     )[0]?.[0] || "-";
-    stat.bestRole = Object.entries(stat.roles).sort(([, first], [, second]) =>
+    const roleEntries = Object.entries(stat.roles);
+    // Prefer roles with at least two games when that evidence exists. A
+    // one-game role remains eligible only when it is the player's sole sample.
+    const establishedRoles = roleEntries.filter(([, role]) => role.games >= 2);
+    const eligibleRoles = establishedRoles.length ? establishedRoles : roleEntries;
+    stat.bestRole = eligibleRoles.sort(([, first], [, second]) =>
       getRoleScore(second) - getRoleScore(first) ||
       second.games - first.games ||
       second.wins - first.wins,
