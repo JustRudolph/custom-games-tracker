@@ -175,12 +175,27 @@ export function getPlayerStats(matches) {
 }
 
 export function rankPlayers(stats) {
-  return Object.entries(stats).sort(
-    ([, first], [, second]) =>
-      second.wins / second.games - first.wins / first.games ||
+  return Object.entries(stats)
+    .map(([name, stat]) => [name, { ...stat, leaderboardScore: getLeaderboardScore(stat) }])
+    .sort(([, first], [, second]) =>
+      second.leaderboardScore - first.leaderboardScore ||
+      second.games - first.games ||
       second.averageKda - first.averageKda ||
-      second.games - first.games,
-  );
+      second.wins - first.wins,
+    );
+}
+
+export function getLeaderboardScore(stat) {
+  if (!stat.games) return 0;
+
+  const rawWinRate = (stat.wins / stat.games) * 100;
+  const confidence = stat.games / (stat.games + 5);
+  const reliableWinRate = 50 + (rawWinRate - 50) * confidence;
+  const normalizedKda = Math.min(stat.averageKda, 8) / 8 * 100;
+  const reliableKda = 50 + (normalizedKda - 50) * confidence;
+  const gamesScore = (1 - Math.exp(-stat.games / 10)) * 100;
+
+  return reliableWinRate * 0.5 + reliableKda * 0.3 + gamesScore * 0.2;
 }
 
 export function getWinRate(stat) {
