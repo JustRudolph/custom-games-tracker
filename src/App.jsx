@@ -261,6 +261,7 @@ function App() {
                 onExport={exportMatches}
                 champions={dataDragonChampions}
                 canWrite={canWrite}
+                isOwner={isOwner}
               />
             </section>
             <PlayerInsights
