@@ -1671,6 +1671,11 @@ textarea {
   object-fit: contain;
   object-position: left center;
 }
+.stats-image-button { display: block; max-width: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
+.stats-image-button:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.image-lightbox { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: 30px; background: rgb(3 8 13 / 86%); cursor: zoom-out; }
+.image-lightbox img { display: block; max-width: min(100%, 1400px); max-height: calc(100vh - 60px); object-fit: contain; box-shadow: 0 20px 80px rgb(0 0 0 / 45%); cursor: default; }
+.image-lightbox-close { position: absolute; top: 20px; right: 24px; width: 42px; height: 42px; border: 1px solid rgb(255 255 255 / 35%); background: rgb(0 0 0 / 24%); color: #fff; font-size: 22px; cursor: pointer; }
 .spin-review-note {
   max-width: 380px;
   margin: 8px auto 16px;

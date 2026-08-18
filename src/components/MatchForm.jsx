@@ -3,6 +3,7 @@ import { ROLES, today } from "../utils/matches.js";
 import { findFirstPlayerMatch } from "../utils/players.js";
 import ChampionPicker from "./ChampionPicker.jsx";
 import DiscardConfirmation from "./DiscardConfirmation.jsx";
+import ImageLightbox from "./ImageLightbox.jsx";
 
 const newPlayer = (role) => ({
   name: "",
@@ -164,6 +165,7 @@ export default function MatchForm({
   const [isCloseConfirmationOpen, setIsCloseConfirmationOpen] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isStatsImageOpen, setIsStatsImageOpen] = useState(false);
   const submitStatus =
     canWrite && form.status !== "pending" ? "complete" : "pending";
   function readStatsImage(file) {
@@ -433,7 +435,9 @@ export default function MatchForm({
               </>}
               {form.statsImage && (
                 <div className="stats-image-preview">
-                  <img src={form.statsImage} alt="Custom stats preview" />
+                  <button className="stats-image-button" type="button" onClick={() => setIsStatsImageOpen(true)} aria-label="Enlarge custom stats screenshot">
+                    <img src={form.statsImage} alt="Custom stats preview" />
+                  </button>
                   {!canWrite && <button className="ghost-btn" type="button" onClick={() => setForm({ ...form, statsImage: "" })}>Remove image</button>}
                 </div>
               )}
@@ -476,6 +480,7 @@ export default function MatchForm({
           </div>
         </form>
       </div>
+      {isStatsImageOpen && <ImageLightbox src={form.statsImage} alt="Enlarged custom stats screenshot" onClose={() => setIsStatsImageOpen(false)} />}
       {isCloseConfirmationOpen && (
         <DiscardConfirmation
           title="Close this match?"
