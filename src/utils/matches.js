@@ -136,6 +136,20 @@ function getRoleScore(roleStats) {
   return reliableWinRate * 0.45 + reliableKda * 0.3 + experience * 0.25;
 }
 
+function getChampionScore(championStats) {
+  if (!championStats?.games) return 0;
+  const winRate = (championStats.wins / championStats.games) * 100;
+  const confidence = championStats.games / (championStats.games + 4);
+  const reliableWinRate = 50 + (winRate - 50) * confidence;
+  const averageKda = (championStats.kills + championStats.assists) / Math.max(1, championStats.deaths);
+  const cappedKda = Math.min(averageKda, 8);
+  const kdaScore = (cappedKda / (cappedKda + 2)) * 100;
+  const reliableKda = 50 + (kdaScore - 50) * confidence;
+  const experience = (1 - Math.exp(-championStats.games / 8)) * 100;
+
+  return reliableWinRate * 0.5 + reliableKda * 0.3 + experience * 0.2;
+}
+
 export function splitPlayerNames(value) {
   return parsePlayers(value)
     .map((player) => player.name)
@@ -162,9 +176,13 @@ export function getPlayerStats(matches) {
       stat.assists += Number.isFinite(assists) ? assists : 0;
 
       if (champion) {
-        stat.champions[champion] ??= { games: 0, wins: 0 };
-        stat.champions[champion].games += 1;
-        stat.champions[champion].wins += won ? 1 : 0;
+        stat.champions[champion] ??= { games: 0, wins: 0, kills: 0, deaths: 0, assists: 0 };
+        const championStat = stat.champions[champion];
+        championStat.games += 1;
+        championStat.wins += won ? 1 : 0;
+        championStat.kills += Number.isFinite(kills) ? kills : 0;
+        championStat.deaths += Number.isFinite(deaths) ? deaths : 0;
+        championStat.assists += Number.isFinite(assists) ? assists : 0;
       }
 
       if (details.role) {
@@ -183,8 +201,15 @@ export function getPlayerStats(matches) {
 
   Object.values(stats).forEach((stat) => {
     stat.averageKda = (stat.kills + stat.assists) / Math.max(1, stat.deaths);
-    stat.bestChampion = Object.entries(stat.champions).sort(([, first], [, second]) =>
-      second.wins / second.games - first.wins / first.games || second.games - first.games,
+    const championEntries = Object.entries(stat.champions);
+    // Ignore one-game champions when the player has another champion with a
+    // meaningful sample, preventing a single lucky result from winning.
+    const establishedChampions = championEntries.filter(([, champion]) => champion.games >= 2);
+    const eligibleChampions = establishedChampions.length ? establishedChampions : championEntries;
+    stat.bestChampion = eligibleChampions.sort(([, first], [, second]) =>
+      getChampionScore(second) - getChampionScore(first) ||
+      second.games - first.games ||
+      second.wins - first.wins,
     )[0]?.[0] || "-";
     const roleEntries = Object.entries(stat.roles);
     // Prefer roles with at least two games when that evidence exists. A
