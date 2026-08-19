@@ -316,6 +316,38 @@ app.delete("/api/accounts/:id", requireAuth, requireOwner, async (req, res) => {
   res.status(204).end();
 });
 
+app.get("/api/fun-facts", async (_req, res) => {
+  const [rows] = await db.execute("SELECT id, fact_text, created_at, updated_at FROM fun_facts ORDER BY created_at DESC, id DESC");
+  res.json(rows.map((row) => ({ id: String(row.id), text: row.fact_text, createdAt: row.created_at, updatedAt: row.updated_at })));
+});
+
+app.post("/api/fun-facts", requireAuth, requireWrite, async (req, res) => {
+  const text = cleanText(req.body?.text, 500);
+  if (text.length < 3) return res.status(400).json({ error: "A fun fact must be at least 3 characters." });
+  const [result] = await db.execute("INSERT INTO fun_facts (fact_text, created_by) VALUES (?, ?)", [text, req.admin.id]);
+  const [rows] = await db.execute("SELECT id, fact_text, created_at, updated_at FROM fun_facts WHERE id = ?", [result.insertId]);
+  const row = rows[0];
+  res.status(201).json({ id: String(row.id), text: row.fact_text, createdAt: row.created_at, updatedAt: row.updated_at });
+});
+
+app.patch("/api/fun-facts/:id", requireAuth, requireWrite, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Invalid fun fact ID." });
+  const text = cleanText(req.body?.text, 500);
+  if (text.length < 3) return res.status(400).json({ error: "A fun fact must be at least 3 characters." });
+  const [result] = await db.execute("UPDATE fun_facts SET fact_text = ? WHERE id = ?", [text, req.params.id]);
+  if (!result.affectedRows) return res.status(404).json({ error: "Fun fact not found." });
+  const [rows] = await db.execute("SELECT id, fact_text, created_at, updated_at FROM fun_facts WHERE id = ?", [req.params.id]);
+  const row = rows[0];
+  res.json({ id: String(row.id), text: row.fact_text, createdAt: row.created_at, updatedAt: row.updated_at });
+});
+
+app.delete("/api/fun-facts/:id", requireAuth, requireWrite, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Invalid fun fact ID." });
+  const [result] = await db.execute("DELETE FROM fun_facts WHERE id = ?", [req.params.id]);
+  if (!result.affectedRows) return res.status(404).json({ error: "Fun fact not found." });
+  res.status(204).end();
+});
+
 app.get("/api/players", async (req, res) => res.json(await getPlayers(Boolean(await findAdmin(req)))));
 app.post("/api/players", requireAuth, requireWrite, async (req, res) => {
   const { name, notes = "", active = true, roleRanks = {} } = req.body || {};

@@ -3,6 +3,7 @@ import AppHeader from "./components/AppHeader.jsx";
 import AccountsDashboard from "./components/AccountsDashboard.jsx";
 import Hero from "./components/Hero.jsx";
 import FullLeaderboard from "./components/FullLeaderboard.jsx";
+import FunFacts from "./components/FunFacts.jsx";
 import MatchForm from "./components/MatchForm.jsx";
 import MatchHistory from "./components/MatchHistory.jsx";
 import LoginPage from "./components/LoginPage.jsx";
@@ -32,6 +33,7 @@ function App() {
   const [accounts, setAccounts] = useState([]);
   const [dataError, setDataError] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [funFacts, setFunFacts] = useState([]);
   const [dataDragonChampions, setDataDragonChampions] = useState([]);
   const [isChampionLibraryLoading, setIsChampionLibraryLoading] = useState(true);
   const [championLibraryError, setChampionLibraryError] = useState("");
@@ -50,9 +52,10 @@ function App() {
 
   async function loadDatabaseData() {
     try {
-      const [loadedMatches, loadedPlayers] = await Promise.all([api.getMatches(), api.getPlayers()]);
+      const [loadedMatches, loadedPlayers, loadedFunFacts] = await Promise.all([api.getMatches(), api.getPlayers(), api.getFunFacts()]);
       setMatches(loadedMatches);
       setPlayers(loadedPlayers);
+      setFunFacts(loadedFunFacts);
       setDataError("");
     } catch (error) {
       setDataError(error.message);
@@ -163,6 +166,21 @@ function App() {
     setAccounts((current) => current.filter((account) => account.id !== id));
   }
 
+  async function createFunFact(fact) {
+    const saved = await api.createFunFact(fact);
+    setFunFacts((current) => [saved, ...current]);
+  }
+
+  async function updateFunFact(fact) {
+    const saved = await api.updateFunFact(fact);
+    setFunFacts((current) => current.map((item) => item.id === saved.id ? saved : item));
+  }
+
+  async function deleteFunFact(id) {
+    await api.deleteFunFact(id);
+    setFunFacts((current) => current.filter((item) => item.id !== id));
+  }
+
   async function updateProfile(profile) {
     const updatedAdmin = await api.updateProfile(profile);
     setAdmin(updatedAdmin);
@@ -250,6 +268,7 @@ function App() {
             matches={matches}
             topPlayer={topPlayer}
           />
+          <FunFacts facts={funFacts} canWrite={canWrite} onCreate={createFunFact} onUpdate={updateFunFact} onDelete={deleteFunFact} />
           <div className="dashboard-actions">
             <button
               className="primary-btn log-custom-button"
