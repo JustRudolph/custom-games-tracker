@@ -11,7 +11,11 @@ export default function FunFacts({ facts, canWrite, onCreate, onUpdate, onDelete
   useEffect(() => {
     if (!currentFacts.length) return undefined;
     setActiveIndex(Math.floor(Math.random() * currentFacts.length));
-    const timer = window.setInterval(() => setActiveIndex((index) => (index + 1) % currentFacts.length), 24000);
+    const timer = window.setInterval(() => setActiveIndex((index) => {
+      if (currentFacts.length < 2) return index;
+      const choices = currentFacts.map((_, factIndex) => factIndex).filter((factIndex) => factIndex !== index);
+      return choices[Math.floor(Math.random() * choices.length)];
+    }), 24000);
     return () => window.clearInterval(timer);
   }, [currentFacts.length]);
 
