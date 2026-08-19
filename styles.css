@@ -567,10 +567,10 @@ button:disabled {
   margin-top: 22px;
   padding: 14px 16px;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--blue) 28%, var(--line));
-  border-top: 2px solid var(--blue);
-  background: color-mix(in srgb, var(--blue) 4%, var(--white));
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--blue) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--blue) 42%, var(--line));
+  border-left: 5px solid var(--blue);
+  background: color-mix(in srgb, var(--blue) 7%, var(--white));
+  box-shadow: 0 5px 18px color-mix(in srgb, var(--blue) 10%, transparent);
   animation: customs-fact-attention 5s ease-in-out infinite;
 }
 .fun-facts-label {
@@ -607,8 +607,8 @@ button:disabled {
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes customs-fact-attention {
-  0%, 100% { box-shadow: 0 4px 16px color-mix(in srgb, var(--blue) 7%, transparent); }
-  50% { box-shadow: 0 5px 19px color-mix(in srgb, var(--blue) 13%, transparent); }
+  0%, 100% { box-shadow: 0 5px 18px color-mix(in srgb, var(--blue) 10%, transparent); }
+  50% { box-shadow: 0 7px 24px color-mix(in srgb, var(--blue) 20%, transparent); }
 }
 .fun-facts-all { margin-left: auto; padding: 4px 0; border: 0; background: transparent; color: var(--muted); font: 600 13px "Segoe UI", Arial, sans-serif; cursor: pointer; white-space: nowrap; }
 .fun-facts-all:hover { color: var(--ink); }
