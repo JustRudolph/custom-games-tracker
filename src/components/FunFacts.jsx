@@ -11,7 +11,7 @@ export default function FunFacts({ facts, canWrite, onCreate, onUpdate, onDelete
   useEffect(() => {
     if (!currentFacts.length) return undefined;
     setActiveIndex(Math.floor(Math.random() * currentFacts.length));
-    const timer = window.setInterval(() => setActiveIndex((index) => (index + 1) % currentFacts.length), 12000);
+    const timer = window.setInterval(() => setActiveIndex((index) => (index + 1) % currentFacts.length), 24000);
     return () => window.clearInterval(timer);
   }, [currentFacts.length]);
 
@@ -34,7 +34,7 @@ export default function FunFacts({ facts, canWrite, onCreate, onUpdate, onDelete
   return <>
     <section className="fun-facts-bar" aria-label="Customs fact">
       <span className="fun-facts-label">CUSTOMS FACT</span>
-      <span className="fun-facts-text">{currentFacts.length ? currentFacts[activeIndex % currentFacts.length].text : "Add the first customs fact."}</span>
+      <span className="fun-facts-text" key={currentFacts.length ? `${currentFacts[activeIndex % currentFacts.length].id}-${activeIndex}` : "empty"}>{currentFacts.length ? currentFacts[activeIndex % currentFacts.length].text : "Add the first customs fact."}</span>
       {canWrite && <button type="button" className="fun-facts-all" onClick={() => { setError(""); setIsOpen(true); }}>All facts</button>}
       {canWrite && <button type="button" className="fun-facts-add" aria-label="Add fun fact" onClick={openNew}>+</button>}
     </section>
