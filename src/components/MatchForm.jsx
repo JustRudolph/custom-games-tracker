@@ -201,7 +201,7 @@ export default function MatchForm({
     setError("");
     setIsAnalyzingImage(true);
     try {
-      const extracted = await analyzeMatchScreenshot(form.statsImage, (message) => {
+      const extracted = await analyzeMatchScreenshot(form.statsImage, playerNames, (message) => {
         if (message.status === "recognizing text") setError(`Scanning screenshot... ${Math.round((message.progress || 0) * 100)}%`);
       });
       if (!extracted.detectedRows) throw new Error("No player rows with K/D/A were detected. Try a clearer or uncropped scoreboard screenshot.");

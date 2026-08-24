@@ -73,6 +73,23 @@ function cleanRowName(value) {
   return parts.join(" ").trim().slice(0, 100);
 }
 
+function normalizeName(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function matchKnownName(value, knownNames) {
+  if (!knownNames?.length) return value;
+  const normalized = normalizeName(value);
+  if (!normalized) return "";
+  const exact = knownNames.find((name) => normalizeName(name) === normalized);
+  if (exact) return exact;
+  const close = knownNames.find((name) => {
+    const candidate = normalizeName(name);
+    return candidate.length >= 4 && (candidate.includes(normalized) || normalized.includes(candidate));
+  });
+  return close || "";
+}
+
 function findKda(line) {
   const slashMatches = [...line.matchAll(kdaPattern)];
   const slashMatch = slashMatches.at(-1);
@@ -108,7 +125,7 @@ function parseRows(text) {
   return rows.filter((row, index, all) => all.findIndex((candidate) => candidate.name.toLowerCase() === row.name.toLowerCase()) === index).slice(0, 10);
 }
 
-export async function analyzeMatchScreenshot(image, onProgress) {
+export async function analyzeMatchScreenshot(image, knownNames = [], onProgress) {
   const worker = await createWorker("eng", 1, { logger: (message) => onProgress?.(message) });
   try {
     const processedImage = await preprocessImage(image);
@@ -121,8 +138,10 @@ export async function analyzeMatchScreenshot(image, onProgress) {
         const nameResult = await worker.recognize(await cropDataUrl(image, 0.155, rowY + 0.014, 0.145, 0.028));
         const kdaResult = await worker.recognize(await cropDataUrl(image, 0.695, rowY + 0.014, 0.075, 0.028));
         const values = firstKda(kdaResult.data.text);
-        const name = cleanRowName(nameResult.data.text);
-        if (name && values) rows.push({ name, champion: "", kills: values[0], deaths: values[1], assists: values[2] });
+        const name = matchKnownName(cleanRowName(nameResult.data.text), knownNames);
+        const nameConfidence = Number(nameResult.data.confidence || 0);
+        const kdaConfidence = Number(kdaResult.data.confidence || 0);
+        if (name && values && nameConfidence >= 20 && kdaConfidence >= 20) rows.push({ name, champion: "", kills: values[0], deaths: values[1], assists: values[2] });
       }
     }
     const empty = () => ({ name: "", role: "", champion: "", kills: "", deaths: "", assists: "" });
