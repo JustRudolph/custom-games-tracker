@@ -50,7 +50,9 @@ async function cropDataUrl(image, x, y, width, height, scale = 4) {
 
 function firstKda(text) {
   const match = [...String(text || "").matchAll(kdaPattern)][0];
-  return match ? match.slice(1).map(Number) : null;
+  if (match) return match.slice(1).map(Number);
+  const numbers = [...String(text || "").matchAll(/\d{1,3}/g)].map((item) => Number(item[0])).filter((value) => value <= 30);
+  return numbers.length >= 3 ? numbers.slice(0, 3) : null;
 }
 
 function cleanName(value) {
