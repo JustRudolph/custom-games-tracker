@@ -10,6 +10,16 @@ function cleanName(value) {
     .slice(0, 100);
 }
 
+function cleanRowName(value) {
+  const cleaned = cleanName(value).replace(/^\s*[A-Z]?\s*\d{1,3}\s+/, "").trim();
+  if (/^team\s*\d?/i.test(cleaned) || /^k\s*\/\s*d\s*\/\s*a/i.test(cleaned)) return "";
+  const parts = cleaned.split(" ").filter(Boolean);
+  // Scoreboard rows usually read: level, player name, champion, K/D/A.
+  // Remove the final champion token when OCR kept it on the same line.
+  if (parts.length > 1 && /^[A-Za-z][A-Za-z.'-]{2,}$/.test(parts.at(-1))) parts.pop();
+  return parts.join(" ").trim().slice(0, 100);
+}
+
 function parseRows(text) {
   const lines = String(text || "")
     .split(/\r?\n/)
@@ -22,9 +32,11 @@ function parseRows(text) {
     if (!match) return;
     const beforeKda = line.slice(0, match.index).replace(/[|()[\]{}]/g, " ").replace(/^\s*(?:\d{1,3}\s+)+/, "").trim();
     const previous = lines[index - 1] || "";
-    const name = cleanName(beforeKda || previous);
+    const name = cleanRowName(beforeKda || previous);
     if (!name || /^\d+$/.test(name) || name.length < 2) return;
-    rows.push({ name, champion: "", kills: Number(match[1]), deaths: Number(match[2]), assists: Number(match[3]) });
+    const numbers = match.slice(1).map(Number);
+    if (numbers.every((value) => value === 0) && /team/i.test(beforeKda)) return;
+    rows.push({ name, champion: "", kills: numbers[0], deaths: numbers[1], assists: numbers[2] });
   });
   return rows.filter((row, index, all) => all.findIndex((candidate) => candidate.name.toLowerCase() === row.name.toLowerCase()) === index).slice(0, 10);
 }
