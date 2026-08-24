@@ -32,7 +32,7 @@ async function preprocessImage(image) {
   }
 }
 
-async function cropDataUrl(image, x, y, width, height) {
+async function cropDataUrl(image, x, y, width, height, scale = 4) {
   const element = await new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
@@ -40,9 +40,11 @@ async function cropDataUrl(image, x, y, width, height) {
     img.src = image;
   });
   const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(element.naturalWidth * width));
-  canvas.height = Math.max(1, Math.round(element.naturalHeight * height));
-  canvas.getContext("2d").drawImage(element, Math.round(element.naturalWidth * x), Math.round(element.naturalHeight * y), canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+  const cropWidth = Math.max(1, Math.round(element.naturalWidth * width));
+  const cropHeight = Math.max(1, Math.round(element.naturalHeight * height));
+  canvas.width = cropWidth * scale;
+  canvas.height = cropHeight * scale;
+  canvas.getContext("2d").drawImage(element, Math.round(element.naturalWidth * x), Math.round(element.naturalHeight * y), cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
   return canvas.toDataURL("image/png");
 }
 
@@ -114,8 +116,8 @@ export async function analyzeMatchScreenshot(image, onProgress) {
     for (const teamStart of teamStarts) {
       for (let rowIndex = 0; rowIndex < 5; rowIndex += 1) {
         const rowY = teamStart + rowIndex * 0.082;
-        const nameResult = await worker.recognize(await cropDataUrl(processedImage, 0.155, rowY + 0.014, 0.145, 0.028));
-        const kdaResult = await worker.recognize(await cropDataUrl(processedImage, 0.695, rowY + 0.014, 0.075, 0.028));
+        const nameResult = await worker.recognize(await cropDataUrl(image, 0.155, rowY + 0.014, 0.145, 0.028));
+        const kdaResult = await worker.recognize(await cropDataUrl(image, 0.695, rowY + 0.014, 0.075, 0.028));
         const values = firstKda(kdaResult.data.text);
         const name = cleanRowName(nameResult.data.text);
         if (name && values) rows.push({ name, champion: "", kills: values[0], deaths: values[1], assists: values[2] });
