@@ -1,6 +1,6 @@
 import { createWorker } from "tesseract.js";
 
-const kdaPattern = /(\d{1,3})\s*[\/:|]\s*(\d{1,3})\s*[\/:|]\s*(\d{1,3})/;
+const kdaPattern = /(\d{1,3})\s*\/\s*(\d{1,3})\s*\/\s*(\d{1,3})/g;
 
 function cleanName(value) {
   return String(value || "")
@@ -17,9 +17,10 @@ function parseRows(text) {
     .filter(Boolean);
   const rows = [];
   lines.forEach((line, index) => {
-    const match = line.match(kdaPattern);
+    const matches = [...line.matchAll(kdaPattern)];
+    const match = matches.at(-1);
     if (!match) return;
-    const beforeKda = line.slice(0, match.index).replace(/[|()[\]{}]/g, " ").trim();
+    const beforeKda = line.slice(0, match.index).replace(/[|()[\]{}]/g, " ").replace(/^\s*(?:\d{1,3}\s+)+/, "").trim();
     const previous = lines[index - 1] || "";
     const name = cleanName(beforeKda || previous);
     if (!name || /^\d+$/.test(name) || name.length < 2) return;
