@@ -32,6 +32,25 @@ async function preprocessImage(image) {
   }
 }
 
+async function cropDataUrl(image, x, y, width, height) {
+  const element = await new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = image;
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(element.naturalWidth * width));
+  canvas.height = Math.max(1, Math.round(element.naturalHeight * height));
+  canvas.getContext("2d").drawImage(element, Math.round(element.naturalWidth * x), Math.round(element.naturalHeight * y), canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/png");
+}
+
+function firstKda(text) {
+  const match = String(text || "").match(kdaPattern);
+  return match ? match.slice(1).map(Number) : null;
+}
+
 function cleanName(value) {
   return String(value || "")
     .replace(/[^\p{L}\p{N} _.'-]/gu, "")
@@ -89,8 +108,19 @@ export async function analyzeMatchScreenshot(image, onProgress) {
   const worker = await createWorker("eng", 1, { logger: (message) => onProgress?.(message) });
   try {
     const processedImage = await preprocessImage(image);
-    const { data } = await worker.recognize(processedImage);
-    const rows = parseRows(data.text);
+    await worker.setParameters({ tessedit_pageseg_mode: "7", preserve_interword_spaces: "1" });
+    const rows = [];
+    const teamStarts = [0.07, 0.56];
+    for (const teamStart of teamStarts) {
+      for (let rowIndex = 0; rowIndex < 5; rowIndex += 1) {
+        const rowY = teamStart + rowIndex * 0.082;
+        const nameResult = await worker.recognize(await cropDataUrl(processedImage, 0.14, rowY, 0.25, 0.07));
+        const kdaResult = await worker.recognize(await cropDataUrl(processedImage, 0.68, rowY, 0.1, 0.07));
+        const values = firstKda(kdaResult.data.text);
+        const name = cleanRowName(nameResult.data.text);
+        if (name && values) rows.push({ name, champion: "", kills: values[0], deaths: values[1], assists: values[2] });
+      }
+    }
     const empty = () => ({ name: "", role: "", champion: "", kills: "", deaths: "", assists: "" });
     return {
       date: "",
