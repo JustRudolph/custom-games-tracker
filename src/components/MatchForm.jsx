@@ -4,6 +4,7 @@ import { findFirstPlayerMatch } from "../utils/players.js";
 import ChampionPicker from "./ChampionPicker.jsx";
 import DiscardConfirmation from "./DiscardConfirmation.jsx";
 import ImageLightbox from "./ImageLightbox.jsx";
+import { analyzeMatchScreenshot } from "../utils/matchOcr.js";
 
 const newPlayer = (role) => ({
   name: "",
@@ -167,6 +168,7 @@ export default function MatchForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStatsImageOpen, setIsStatsImageOpen] = useState(false);
   const [statsImageFileName, setStatsImageFileName] = useState("");
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const submitStatus =
     canWrite && form.status !== "pending" ? "complete" : "pending";
   function readStatsImage(file) {
@@ -187,13 +189,34 @@ export default function MatchForm({
     reader.readAsDataURL(file);
   }
   function handleStatsPaste(event) {
-    if (canWrite) return;
     const image = [...(event.clipboardData?.items || [])].find((item) =>
       item.type.startsWith("image/"),
     );
     if (!image) return;
     event.preventDefault();
     readStatsImage(image.getAsFile());
+  }
+  async function analyzeStatsImage() {
+    if (!form.statsImage || isAnalyzingImage) return;
+    setError("");
+    setIsAnalyzingImage(true);
+    try {
+      const extracted = await analyzeMatchScreenshot(form.statsImage, (message) => {
+        if (message.status === "recognizing text") setError(`Scanning screenshot... ${Math.round((message.progress || 0) * 100)}%`);
+      });
+      if (!extracted.detectedRows) throw new Error("No player rows with K/D/A were detected. Try a clearer or uncropped scoreboard screenshot.");
+      setForm((current) => ({
+        ...current,
+        date: extracted.date || current.date,
+        winner: extracted.winner || current.winner,
+        blue: extracted.blue?.length === 5 ? fillTeam(extracted.blue) : current.blue,
+        red: extracted.red?.length === 5 ? fillTeam(extracted.red) : current.red,
+      }));
+    } catch (analysisError) {
+      setError(analysisError.message || "Could not analyze the screenshot.");
+    } finally {
+      setIsAnalyzingImage(false);
+    }
   }
   useEffect(() => {
     const closeOnEscape = (event) => {
@@ -424,10 +447,9 @@ export default function MatchForm({
               }
             />
           </label>
-          {(!canWrite || form.statsImage) && (
-            <div className="stats-image-field">
-              <label>{canWrite ? "Submitted stats screenshot" : "Custom stats screenshot"}</label>
-              {!canWrite && <>
+          <div className="stats-image-field">
+              <label>Custom stats screenshot</label>
+              <>
                 <label className="stats-upload-trigger" htmlFor="stats-image-upload">
                   <strong>Upload screenshot</strong>
                   <span>PNG, JPG, or WebP up to 2 MB</span>
@@ -440,18 +462,19 @@ export default function MatchForm({
                   onChange={(event) => readStatsImage(event.target.files?.[0])}
                 />
                 <span>Optional. You can also paste an image anywhere in this form.</span>
+                <span>AI results can be inaccurate. Review every field before saving.</span>
                 {statsImageFileName && <span className="stats-image-file-name">Selected: {statsImageFileName}</span>}
-              </>}
+              </>
               {form.statsImage && (
                 <div className="stats-image-preview">
                   <button className="stats-image-button" type="button" onClick={() => setIsStatsImageOpen(true)} aria-label="Enlarge custom stats screenshot">
                     <img src={form.statsImage} alt="Custom stats preview" />
                   </button>
-                  {!canWrite && <button className="ghost-btn" type="button" onClick={() => { setForm({ ...form, statsImage: "" }); setStatsImageFileName(""); }}>Remove image</button>}
+                  <button className="ghost-btn" type="button" onClick={() => { setForm({ ...form, statsImage: "" }); setStatsImageFileName(""); }}>Remove image</button>
+                  <button className="secondary-btn" type="button" disabled={isAnalyzingImage} onClick={analyzeStatsImage}>{isAnalyzingImage ? "Scanning screenshot..." : "Auto-fill names and K/D/A"}</button>
                 </div>
               )}
-            </div>
-          )}
+          </div>
           {error && (
             <div className="login-error" role="alert">
               {error}

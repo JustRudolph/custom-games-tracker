@@ -228,6 +228,7 @@ function App() {
     openMatchForm({ ...teams, matchType: "spin" });
   }
 
+
   if (isAuthLoading) return <div className="auth-loading">Loading...</div>;
 
   return (
@@ -302,7 +303,7 @@ function App() {
             />
           </section>
           {isMatchModalOpen && (
-            <MatchForm
+              <MatchForm
               onSaveMatch={saveMatch}
               onClose={closeMatchForm}
               playerNames={playerNames}
@@ -310,7 +311,7 @@ function App() {
               isChampionLibraryLoading={isChampionLibraryLoading}
               championLibraryError={championLibraryError}
               initialTeams={spunTeams}
-              canWrite={canWrite}
+                canWrite={canWrite}
             />
           )}
         </main>
