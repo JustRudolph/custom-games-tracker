@@ -50,6 +50,21 @@ function cleanRowName(value) {
   return parts.join(" ").trim().slice(0, 100);
 }
 
+function findKda(line) {
+  const slashMatches = [...line.matchAll(kdaPattern)];
+  const slashMatch = slashMatches.at(-1);
+  if (slashMatch) return { match: slashMatch, values: slashMatch.slice(1).map(Number), start: slashMatch.index };
+
+  const numbers = [...line.matchAll(/\d{1,3}/g)];
+  const candidates = [];
+  for (let index = 0; index <= numbers.length - 3; index += 1) {
+    const values = numbers.slice(index, index + 3).map((item) => Number(item[0]));
+    if (values.every((value) => value <= 30)) candidates.push({ values, start: numbers[index].index });
+  }
+  const candidate = candidates.at(-1);
+  return candidate ? { values: candidate.values, start: candidate.start } : null;
+}
+
 function parseRows(text) {
   const lines = String(text || "")
     .split(/\r?\n/)
@@ -57,14 +72,13 @@ function parseRows(text) {
     .filter(Boolean);
   const rows = [];
   lines.forEach((line, index) => {
-    const matches = [...line.matchAll(kdaPattern)];
-    const match = matches.at(-1);
-    if (!match) return;
-    const beforeKda = line.slice(0, match.index).replace(/[|()[\]{}]/g, " ").replace(/^\s*(?:\d{1,3}\s+)+/, "").trim();
+    const kda = findKda(line);
+    if (!kda) return;
+    const beforeKda = line.slice(0, kda.start).replace(/[|()[\]{}]/g, " ").replace(/^\s*(?:[A-Z]?\s*\d{1,3}\s+)+/, "").trim();
     const previous = lines[index - 1] || "";
     const name = cleanRowName(beforeKda || previous);
     if (!name || /^\d+$/.test(name) || name.length < 2) return;
-    const numbers = match.slice(1).map(Number);
+    const numbers = kda.values;
     if (numbers.every((value) => value === 0) && /team/i.test(beforeKda)) return;
     rows.push({ name, champion: "", kills: numbers[0], deaths: numbers[1], assists: numbers[2] });
   });
