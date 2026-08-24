@@ -49,7 +49,7 @@ async function cropDataUrl(image, x, y, width, height, scale = 4) {
 }
 
 function firstKda(text) {
-  const match = String(text || "").match(kdaPattern);
+  const match = [...String(text || "").matchAll(kdaPattern)][0];
   return match ? match.slice(1).map(Number) : null;
 }
 
