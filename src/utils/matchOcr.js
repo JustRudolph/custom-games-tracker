@@ -108,14 +108,14 @@ export async function analyzeMatchScreenshot(image, onProgress) {
   const worker = await createWorker("eng", 1, { logger: (message) => onProgress?.(message) });
   try {
     const processedImage = await preprocessImage(image);
-    await worker.setParameters({ tessedit_pageseg_mode: "7", preserve_interword_spaces: "1" });
+    await worker.setParameters({ tessedit_pageseg_mode: "7", preserve_interword_spaces: "1", tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .'_-/:" });
     const rows = [];
     const teamStarts = [0.07, 0.56];
     for (const teamStart of teamStarts) {
       for (let rowIndex = 0; rowIndex < 5; rowIndex += 1) {
         const rowY = teamStart + rowIndex * 0.082;
-        const nameResult = await worker.recognize(await cropDataUrl(processedImage, 0.14, rowY, 0.25, 0.07));
-        const kdaResult = await worker.recognize(await cropDataUrl(processedImage, 0.68, rowY, 0.1, 0.07));
+        const nameResult = await worker.recognize(await cropDataUrl(processedImage, 0.155, rowY + 0.014, 0.145, 0.028));
+        const kdaResult = await worker.recognize(await cropDataUrl(processedImage, 0.695, rowY + 0.014, 0.075, 0.028));
         const values = firstKda(kdaResult.data.text);
         const name = cleanRowName(nameResult.data.text);
         if (name && values) rows.push({ name, champion: "", kills: values[0], deaths: values[1], assists: values[2] });
