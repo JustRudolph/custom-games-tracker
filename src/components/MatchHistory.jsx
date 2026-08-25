@@ -67,7 +67,7 @@ function PendingMatchup({ match, champions, onEdit, onApprove, onDelete, isAppro
 }
 
 function CollapsedMatchup({ match, champions, onExpand, showLoggedBy }) {
-  return <div className={"collapsed-matchup winner-" + match.winner}><div className="collapsed-match-meta"><span>{match.date}</span><strong>{getMatchTypeLabel(match.matchType)}</strong>{showLoggedBy && <small>Logged by {match.loggedBy || "Guest"}</small>}</div><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={match.winner === "blue"} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={match.winner === "red"} /><button className="compact-expand" type="button" aria-label="Expand match" onClick={onExpand}>&#x2304;</button></div>;
+  return <div className={"collapsed-matchup winner-" + match.winner}><div className="collapsed-match-meta"><span className="match-date">{match.date}</span><strong className="match-type-label">{getMatchTypeLabel(match.matchType)}</strong>{showLoggedBy && <small>Logged by {match.loggedBy || "Guest"}</small>}{match.notes && <span className="match-note-preview">{match.notes}</span>}</div><CompactTeam players={match.blue} champions={champions} team="blue" isWinner={match.winner === "blue"} /><CompactTeam players={match.red} champions={champions} team="red" isWinner={match.winner === "red"} /><button className="compact-expand" type="button" aria-label="Expand match" onClick={onExpand}>&#x2304;</button></div>;
 }
 
 function MatchCard({ match, onDelete, onEdit, onApprove, approvingMatchId, approvalError, champions, canWrite, isOwner }) {
@@ -77,9 +77,9 @@ function MatchCard({ match, onDelete, onEdit, onApprove, approvingMatchId, appro
   return (
     <article className={"match-card " + (isExpanded ? "expanded" : "collapsed")}>
       {isExpanded && <div className={"match-card-top " + (canWrite ? "can-write" : "guest")}>
-        <span>{match.date}</span>
+        <span className="match-date">{match.date}</span>
         <span className={"match-type-badge " + (match.matchType === "spin" ? "spin" : "manual")}>{getMatchTypeLabel(match.matchType, true)}</span>
-        <span>{match.notes || "Custom game"}</span>
+        <span className={"match-note " + (!match.notes ? "empty" : "")}>{match.notes || "No match notes"}</span>
         {isOwner && <span className="match-logged-by">Logged by {match.loggedBy || "Guest"}</span>}
         <span className={"match-winner " + match.winner}>{match.winner} victory</span>
         {canWrite && <button className="ghost-btn edit-match" type="button" onClick={() => onEdit(match)}>Edit</button>}
