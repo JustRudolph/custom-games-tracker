@@ -187,6 +187,7 @@ export default function MatchForm({
     reader.readAsDataURL(file);
   }
   function handleStatsPaste(event) {
+    if (canWrite) return;
     const image = [...(event.clipboardData?.items || [])].find((item) =>
       item.type.startsWith("image/"),
     );
@@ -423,9 +424,9 @@ export default function MatchForm({
               }
             />
           </label>
-          <div className="stats-image-field">
-              <label>Custom stats screenshot</label>
-              <>
+          {(!canWrite || form.statsImage) && <div className="stats-image-field">
+              <label>{canWrite ? "Submitted stats screenshot" : "Custom stats screenshot"}</label>
+              {!canWrite && <>
                 <label className="stats-upload-trigger" htmlFor="stats-image-upload">
                   <strong>Upload screenshot</strong>
                   <span>PNG, JPG, or WebP up to 2 MB</span>
@@ -439,16 +440,16 @@ export default function MatchForm({
                 />
                 <span>Optional. You can also paste an image anywhere in this form.</span>
                 {statsImageFileName && <span className="stats-image-file-name">Selected: {statsImageFileName}</span>}
-              </>
+              </>}
               {form.statsImage && (
                 <div className="stats-image-preview">
                   <button className="stats-image-button" type="button" onClick={() => setIsStatsImageOpen(true)} aria-label="Enlarge custom stats screenshot">
                     <img src={form.statsImage} alt="Custom stats preview" />
                   </button>
-                  <button className="ghost-btn" type="button" onClick={() => { setForm({ ...form, statsImage: "" }); setStatsImageFileName(""); }}>Remove image</button>
+                  {!canWrite && <button className="ghost-btn" type="button" onClick={() => { setForm({ ...form, statsImage: "" }); setStatsImageFileName(""); }}>Remove image</button>}
                 </div>
               )}
-          </div>
+          </div>}
           {error && (
             <div className="login-error" role="alert">
               {error}

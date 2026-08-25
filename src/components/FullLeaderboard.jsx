@@ -21,6 +21,7 @@ export default function FullLeaderboard({ players, onBack }) {
           <span>Win rate</span>
           <span>Avg KDA</span>
           <span>Best champion</span>
+          <span>Worst champion</span>
           <span>Best role</span>
         </div>
         {players.length ? (
@@ -36,6 +37,7 @@ export default function FullLeaderboard({ players, onBack }) {
               <span className="table-rate">{getWinRate(stat)}%</span>
               <span className="leaderboard-kda">{getAverageKda(stat)}</span>
               <strong>{stat.bestChampion}</strong>
+              <strong>{stat.worstChampion}</strong>
               <strong className="leaderboard-role"><RoleIcon role={stat.bestRole} /></strong>
             </div>
           ))

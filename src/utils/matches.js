@@ -211,7 +211,7 @@ export function getPlayerStats(matches) {
       second.games - first.games ||
       second.wins - first.wins,
     )[0]?.[0] || "-";
-    stat.worstChampion = [...eligibleChampions].sort(([, first], [, second]) =>
+    stat.worstChampion = [...championEntries].sort(([, first], [, second]) =>
       getChampionScore(first) - getChampionScore(second) ||
       first.games - second.games ||
       first.wins - second.wins,
