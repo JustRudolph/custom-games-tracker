@@ -689,7 +689,6 @@ button:disabled {
   min-width: 0;
   background: var(--white);
   border: 1px solid var(--line);
-  animation: rise-in 520ms 160ms ease both;
 }
 .entry-panel {
   padding: 27px;
