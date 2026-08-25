@@ -348,6 +348,32 @@ app.delete("/api/fun-facts/:id", requireAuth, requireWrite, async (req, res) => 
   res.status(204).end();
 });
 
+app.get("/api/board-of-shame", async (_req, res) => {
+  const [rows] = await db.execute("SELECT id, player_id, player_name, reason, image, created_at FROM board_of_shame ORDER BY created_at DESC, id DESC");
+  res.json(rows.map((row) => ({ id: String(row.id), playerId: row.player_id ? String(row.player_id) : "", playerName: row.player_name, reason: row.reason, image: row.image || "", createdAt: row.created_at })));
+});
+
+app.post("/api/board-of-shame", requireAuth, requireWrite, async (req, res) => {
+  const playerId = /^\d+$/.test(String(req.body?.playerId || "")) ? Number(req.body.playerId) : null;
+  const playerName = cleanText(req.body?.playerName, 100);
+  const reason = cleanText(req.body?.reason, 1000);
+  const image = String(req.body?.image || "");
+  if (!playerName || !reason) return res.status(400).json({ error: "Select a player and enter a reason." });
+  const imageError = validateStatsImage(image);
+  if (imageError) return res.status(400).json({ error: imageError });
+  const [result] = await db.execute("INSERT INTO board_of_shame (player_id, player_name, reason, image, created_by) VALUES (?, ?, ?, ?, ?)", [playerId, playerName, reason, image || null, req.admin.id]);
+  const [rows] = await db.execute("SELECT id, player_id, player_name, reason, image, created_at FROM board_of_shame WHERE id = ?", [result.insertId]);
+  const row = rows[0];
+  res.status(201).json({ id: String(row.id), playerId: row.player_id ? String(row.player_id) : "", playerName: row.player_name, reason: row.reason, image: row.image || "", createdAt: row.created_at });
+});
+
+app.delete("/api/board-of-shame/:id", requireAuth, requireWrite, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Invalid shame entry ID." });
+  const [result] = await db.execute("DELETE FROM board_of_shame WHERE id = ?", [req.params.id]);
+  if (!result.affectedRows) return res.status(404).json({ error: "Shame entry not found." });
+  res.status(204).end();
+});
+
 app.get("/api/players", async (req, res) => res.json(await getPlayers(Boolean(await findAdmin(req)))));
 app.post("/api/players", requireAuth, requireWrite, async (req, res) => {
   const { name, notes = "", active = true, roleRanks = {} } = req.body || {};

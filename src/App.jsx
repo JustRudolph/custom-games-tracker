@@ -4,6 +4,7 @@ import AccountsDashboard from "./components/AccountsDashboard.jsx";
 import Hero from "./components/Hero.jsx";
 import FullLeaderboard from "./components/FullLeaderboard.jsx";
 import FunFacts from "./components/FunFacts.jsx";
+import BoardOfShame from "./components/BoardOfShame.jsx";
 import MatchForm from "./components/MatchForm.jsx";
 import MatchHistory from "./components/MatchHistory.jsx";
 import LoginPage from "./components/LoginPage.jsx";
@@ -34,6 +35,7 @@ function App() {
   const [dataError, setDataError] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [funFacts, setFunFacts] = useState([]);
+  const [shameEntries, setShameEntries] = useState([]);
   const [dataDragonChampions, setDataDragonChampions] = useState([]);
   const [isChampionLibraryLoading, setIsChampionLibraryLoading] = useState(true);
   const [championLibraryError, setChampionLibraryError] = useState("");
@@ -52,10 +54,11 @@ function App() {
 
   async function loadDatabaseData() {
     try {
-      const [loadedMatches, loadedPlayers, loadedFunFacts] = await Promise.all([api.getMatches(), api.getPlayers(), api.getFunFacts()]);
+      const [loadedMatches, loadedPlayers, loadedFunFacts, loadedShameEntries] = await Promise.all([api.getMatches(), api.getPlayers(), api.getFunFacts(), api.getShameEntries()]);
       setMatches(loadedMatches);
       setPlayers(loadedPlayers);
       setFunFacts(loadedFunFacts);
+      setShameEntries(loadedShameEntries);
       setDataError("");
     } catch (error) {
       setDataError(error.message);
@@ -181,6 +184,16 @@ function App() {
     setFunFacts((current) => current.filter((item) => item.id !== id));
   }
 
+  async function createShameEntry(entry) {
+    const saved = await api.createShameEntry(entry);
+    setShameEntries((current) => [saved, ...current]);
+  }
+
+  async function deleteShameEntry(id) {
+    await api.deleteShameEntry(id);
+    setShameEntries((current) => current.filter((entry) => entry.id !== id));
+  }
+
   async function updateProfile(profile) {
     const updatedAdmin = await api.updateProfile(profile);
     setAdmin(updatedAdmin);
@@ -270,6 +283,7 @@ function App() {
             topPlayer={topPlayer}
           />
           <FunFacts facts={funFacts} canWrite={canWrite} onCreate={createFunFact} onUpdate={updateFunFact} onDelete={deleteFunFact} />
+          <BoardOfShame entries={shameEntries} players={players} canWrite={canWrite} onCreate={createShameEntry} onDelete={deleteShameEntry} />
           <div className="dashboard-actions">
             <button
               className="primary-btn log-custom-button"
