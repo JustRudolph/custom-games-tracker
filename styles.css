@@ -2632,10 +2632,10 @@ footer {
 .leaderboard-table-head,
 .leaderboard-table-row {
   display: grid;
-  grid-template-columns: 60px minmax(120px, 1fr) 105px 90px 80px minmax(
-      105px,
-      1fr
-    ) 90px 90px;
+  grid-template-columns: 60px minmax(150px, 1.2fr) 105px 90px 80px minmax(
+      130px,
+      0.8fr
+    ) minmax(130px, 0.8fr) 90px;
   gap: 18px;
   align-items: center;
   padding: 16px 24px;
@@ -2657,6 +2657,20 @@ footer {
   color: color-mix(in srgb, var(--ink) 88%, var(--muted));
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+}
+.leaderboard-table-head span,
+.leaderboard-table-row > * {
+  min-width: 0;
+}
+.leaderboard-table-head span:nth-child(6),
+.leaderboard-table-head span:nth-child(7) {
+  line-height: 1.2;
+}
+.leaderboard-table-row > strong:nth-child(6),
+.leaderboard-table-row > strong:nth-child(7) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .table-rate {
   color: var(--match-blue);
@@ -2684,10 +2698,10 @@ footer {
   }
   .leaderboard-table-head,
   .leaderboard-table-row {
-    grid-template-columns: 48px minmax(110px, 1fr) 90px 82px 70px minmax(
-        90px,
-        1fr
-      ) 70px 70px;
+    grid-template-columns: 48px minmax(120px, 1.2fr) 90px 82px 70px minmax(
+        110px,
+        0.8fr
+      ) minmax(110px, 0.8fr) 70px;
     gap: 10px;
     padding-inline: 16px;
   }
