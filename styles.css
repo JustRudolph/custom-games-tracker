@@ -647,6 +647,7 @@ button:disabled {
 .board-shame-file-input { width: 100%; padding: 10px; border: 1px dashed color-mix(in srgb, var(--blue) 65%, var(--line)); background: color-mix(in srgb, var(--blue) 7%, var(--soft)); color: var(--ink); font: 14px "Segoe UI", Arial, sans-serif; }
 .board-shame-paste-hint { color: var(--muted); font-size: 13px; font-weight: 400; }
 .board-shame-upload-preview { max-height: 180px; max-width: 100%; object-fit: contain; object-position: left center; }
+.board-shame-upload-wrap { display: grid; gap: 9px; justify-items: start; }
 .data-error {
   margin-top: 18px;
   padding: 12px 14px;
