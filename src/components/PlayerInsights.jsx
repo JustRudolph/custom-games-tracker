@@ -10,7 +10,7 @@ function PlayerCard({ name, stat }) {
       <div className="player-meta">
         {stat.wins} W / {stat.games - stat.wins} L | {stat.games} games
       </div>
-      <div className="player-performance"><span>Avg KDA <strong>{getAverageKda(stat)}</strong></span><span>Best champion <strong>{stat.bestChampion}</strong></span><span>Best role <strong className="leaderboard-role"><RoleIcon role={stat.bestRole} /></strong></span></div>
+      <div className="player-performance"><span>Avg KDA <strong>{getAverageKda(stat)}</strong></span><span>Best champion <strong>{stat.bestChampion}</strong></span><span>Worst champion <strong>{stat.worstChampion}</strong></span><span>Best role <strong className="leaderboard-role"><RoleIcon role={stat.bestRole} /></strong></span></div>
       <div className="bar">
         <i style={{ width: rate + "%" }} />
       </div>

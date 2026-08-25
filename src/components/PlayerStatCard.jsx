@@ -33,6 +33,12 @@ export default function PlayerStatCard({ name, stat, champion, bestPerformance, 
           </strong>
         </div>
         <div>
+          <span>Worst champion</span>
+          <strong className="player-stat-champion">
+            {stat.worstChampion}
+          </strong>
+        </div>
+        <div>
           <span>Best role</span>
           <strong className="player-stat-role">
             <RoleIcon role={stat.bestRole} />

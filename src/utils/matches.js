@@ -211,6 +211,11 @@ export function getPlayerStats(matches) {
       second.games - first.games ||
       second.wins - first.wins,
     )[0]?.[0] || "-";
+    stat.worstChampion = [...eligibleChampions].sort(([, first], [, second]) =>
+      getChampionScore(first) - getChampionScore(second) ||
+      first.games - second.games ||
+      first.wins - second.wins,
+    )[0]?.[0] || "-";
     const roleEntries = Object.entries(stat.roles);
     // Prefer roles with at least two games when that evidence exists. A
     // one-game role remains eligible only when it is the player's sole sample.
