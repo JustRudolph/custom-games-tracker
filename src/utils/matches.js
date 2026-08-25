@@ -1,11 +1,13 @@
 export const STORAGE_KEY = "customs-ledger-v1";
 
 export const today = () => {
+  // Match dates are calendar dates shared by everyone, not each visitor's
+  // local date. UTC prevents an EU/NA session near midnight splitting dates.
   const date = new Date();
   return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0"),
   ].join("-");
 };
 export const ROLES = ["Top", "Jungle", "Middle", "Bottom", "Support"];
