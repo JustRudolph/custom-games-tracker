@@ -30,7 +30,7 @@ if (!Number.isInteger(trustProxy) || trustProxy < 0 || trustProxy > 5) throw new
 if (trustProxy) app.set("trust proxy", trustProxy);
 app.disable("x-powered-by");
 app.use((req, res, next) => {
-  res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://ddragon.leagueoflegends.com https://raw.communitydragon.org; connect-src 'self' https://ddragon.leagueoflegends.com https://cdn.jsdelivr.net; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'");
+  res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://ddragon.leagueoflegends.com https://raw.communitydragon.org; connect-src 'self' https://ddragon.leagueoflegends.com; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");

@@ -4,7 +4,6 @@ import { findFirstPlayerMatch } from "../utils/players.js";
 import ChampionPicker from "./ChampionPicker.jsx";
 import DiscardConfirmation from "./DiscardConfirmation.jsx";
 import ImageLightbox from "./ImageLightbox.jsx";
-import { analyzeMatchScreenshot } from "../utils/matchOcr.js";
 
 const newPlayer = (role) => ({
   name: "",
@@ -168,7 +167,6 @@ export default function MatchForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStatsImageOpen, setIsStatsImageOpen] = useState(false);
   const [statsImageFileName, setStatsImageFileName] = useState("");
-  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const submitStatus =
     canWrite && form.status !== "pending" ? "complete" : "pending";
   function readStatsImage(file) {
@@ -195,28 +193,6 @@ export default function MatchForm({
     if (!image) return;
     event.preventDefault();
     readStatsImage(image.getAsFile());
-  }
-  async function analyzeStatsImage() {
-    if (!form.statsImage || isAnalyzingImage) return;
-    setError("");
-    setIsAnalyzingImage(true);
-    try {
-      const extracted = await analyzeMatchScreenshot(form.statsImage, playerNames, (message) => {
-        if (message.status === "recognizing text") setError(`Scanning screenshot... ${Math.round((message.progress || 0) * 100)}%`);
-      });
-      if (!extracted.detectedRows) throw new Error("No player rows with K/D/A were detected. Try a clearer or uncropped scoreboard screenshot.");
-      setForm((current) => ({
-        ...current,
-        date: extracted.date || current.date,
-        winner: extracted.winner || current.winner,
-        blue: extracted.blue?.length === 5 ? fillTeam(extracted.blue) : current.blue,
-        red: extracted.red?.length === 5 ? fillTeam(extracted.red) : current.red,
-      }));
-    } catch (analysisError) {
-      setError(analysisError.message || "Could not analyze the screenshot.");
-    } finally {
-      setIsAnalyzingImage(false);
-    }
   }
   useEffect(() => {
     const closeOnEscape = (event) => {
@@ -462,7 +438,6 @@ export default function MatchForm({
                   onChange={(event) => readStatsImage(event.target.files?.[0])}
                 />
                 <span>Optional. You can also paste an image anywhere in this form.</span>
-                <span>AI results can be inaccurate. Review every field before saving.</span>
                 {statsImageFileName && <span className="stats-image-file-name">Selected: {statsImageFileName}</span>}
               </>
               {form.statsImage && (
@@ -471,7 +446,6 @@ export default function MatchForm({
                     <img src={form.statsImage} alt="Custom stats preview" />
                   </button>
                   <button className="ghost-btn" type="button" onClick={() => { setForm({ ...form, statsImage: "" }); setStatsImageFileName(""); }}>Remove image</button>
-                  <button className="secondary-btn" type="button" disabled={isAnalyzingImage} onClick={analyzeStatsImage}>{isAnalyzingImage ? "Scanning screenshot..." : "Auto-fill names and K/D/A"}</button>
                 </div>
               )}
           </div>
