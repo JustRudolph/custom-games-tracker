@@ -251,6 +251,7 @@ function App() {
         onOpenPlayers={async () => { await loadDatabaseData(); setView("players"); }}
         onOpenAccounts={async () => { try { await loadAccounts(); setView("accounts"); } catch (error) { setDataError(error.message); setView("accounts"); } }}
         onOpenLeaderboard={() => setView("leaderboard")}
+        onOpenShame={() => setView("shame")}
         playerSearch={playerSearch}
         onPlayerSearch={setPlayerSearch}
         playerSearchResults={playerSearchResults}
@@ -274,6 +275,8 @@ function App() {
           players={rankedPlayers}
           onBack={() => setView("dashboard")}
         />
+      ) : view === "shame" ? (
+        <BoardOfShame entries={shameEntries} players={players} canWrite={canWrite} onCreate={createShameEntry} onDelete={deleteShameEntry} fullPage onBack={() => setView("dashboard")} />
       ) : (
         <main>
           {dataError && <div className="data-error">Database connection failed: {dataError}</div>}
@@ -283,7 +286,6 @@ function App() {
             topPlayer={topPlayer}
           />
           <FunFacts facts={funFacts} canWrite={canWrite} onCreate={createFunFact} onUpdate={updateFunFact} onDelete={deleteFunFact} />
-          <BoardOfShame entries={shameEntries} players={players} canWrite={canWrite} onCreate={createShameEntry} onDelete={deleteShameEntry} />
           <div className="dashboard-actions">
             <button
               className="primary-btn log-custom-button"

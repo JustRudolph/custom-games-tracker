@@ -5,6 +5,7 @@ export default function AppHeader({
   onOpenPlayers,
   onOpenAccounts,
   onOpenLeaderboard,
+  onOpenShame,
   playerSearch,
   onPlayerSearch,
   playerSearchResults,
@@ -91,6 +92,7 @@ export default function AppHeader({
         {canWrite && <button className="ghost-btn" onClick={() => runAction(onOpenPlayers)}>Players</button>}
         {admin?.role === "owner" && <button className="ghost-btn" onClick={() => runAction(onOpenAccounts)}>Accounts</button>}
         <button className="ghost-btn" onClick={() => runAction(onOpenLeaderboard)}>Leaderboard</button>
+        <button className="ghost-btn" onClick={() => runAction(onOpenShame)}>Board of shame</button>
         <button
           className="theme-toggle"
           onClick={() => runAction(onToggleTheme)}
