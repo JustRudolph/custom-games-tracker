@@ -14,7 +14,11 @@ export default function FullLeaderboard({ players, onBack }) {
     });
   }, [players, sort]);
   function toggleSort(key) {
-    setSort((current) => current.key === key ? { key, direction: current.direction === "asc" ? "desc" : "asc" } : { key, direction: "asc" });
+    setSort((current) => {
+      if (current.key !== key) return { key, direction: "asc" };
+      if (current.direction === "asc") return { key, direction: "desc" };
+      return { key: "", direction: "asc" };
+    });
   }
   const sortLabel = (key, label) => <button type="button" className={"leaderboard-sort " + (sort.key === key ? "active" : "")} onClick={() => toggleSort(key)}>{label}<span aria-hidden="true">{sort.key === key ? (sort.direction === "asc" ? " ↑" : " ↓") : " ↕"}</span></button>;
   return (
