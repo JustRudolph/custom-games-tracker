@@ -2722,6 +2722,9 @@ footer {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+.leaderboard-sort { display: inline-flex; align-items: center; gap: 4px; width: max-content; padding: 5px 7px; border: 1px solid transparent; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.leaderboard-sort:hover, .leaderboard-sort.active { border-color: color-mix(in srgb, var(--blue) 35%, transparent); background: color-mix(in srgb, var(--blue) 9%, transparent); color: var(--blue); }
+.leaderboard-sort span { color: var(--blue); font-size: 14px; }
 .leaderboard-table-row {
   border-top: 1px solid var(--line);
 }

@@ -1,7 +1,22 @@
+import { useMemo, useState } from "react";
 import { getAverageKda, getWinRate } from "../utils/matches.js";
 import RoleIcon from "./RoleIcon.jsx";
 
 export default function FullLeaderboard({ players, onBack }) {
+  const [sort, setSort] = useState({ key: "", direction: "asc" });
+  const sortedPlayers = useMemo(() => {
+    if (!sort.key) return players;
+    return [...players].sort(([, first], [, second]) => {
+      const firstValue = sort.key === "winRate" ? getWinRate(first) : getAverageKda(first);
+      const secondValue = sort.key === "winRate" ? getWinRate(second) : getAverageKda(second);
+      const difference = firstValue - secondValue;
+      return (sort.direction === "asc" ? difference : -difference) || second.games - first.games || first.displayName.localeCompare(second.displayName);
+    });
+  }, [players, sort]);
+  function toggleSort(key) {
+    setSort((current) => current.key === key ? { key, direction: current.direction === "asc" ? "desc" : "asc" } : { key, direction: "asc" });
+  }
+  const sortLabel = (key, label) => <button type="button" className={"leaderboard-sort " + (sort.key === key ? "active" : "")} onClick={() => toggleSort(key)}>{label}<span aria-hidden="true">{sort.key === key ? (sort.direction === "asc" ? " ↑" : " ↓") : " ↕"}</span></button>;
   return (
     <main className="full-leaderboard">
       <div className="full-leaderboard-head">
@@ -18,14 +33,14 @@ export default function FullLeaderboard({ players, onBack }) {
           <span>Rank</span>
           <span>Player</span>
           <span>Record</span>
-          <span>Win rate</span>
-          <span>Avg KDA</span>
+          {sortLabel("winRate", "Win rate")}
+          {sortLabel("averageKda", "Avg KDA")}
           <span>Best champion</span>
           <span>Worst champion</span>
           <span>Best role</span>
         </div>
         {players.length ? (
-          players.map(([name, stat], index) => (
+          sortedPlayers.map(([name, stat], index) => (
             <div className="leaderboard-table-row" key={name}>
               <span className="leaderboard-rank">
                 {String(index + 1).padStart(2, "0")}
