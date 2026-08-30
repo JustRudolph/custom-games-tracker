@@ -428,7 +428,7 @@ app.get("/api/matches", async (req, res) => {
   });
   res.json(matches.map((match) => {
     const teams = teamsByMatch.get(match.id) || { blue: [], red: [] };
-    return { id: String(match.id), date: match.played_date, winner: match.winner_team || "", matchType: match.match_type, status: match.status, loggedBy: match.created_by_name || "Guest", statsImage: includePrivate ? match.stats_image || "" : "", notes: includePrivate ? match.notes || "" : "", ...teams };
+    return { id: String(match.id), date: match.played_date, winner: match.winner_team || "", matchType: match.match_type, status: match.status, loggedBy: match.created_by_name || "Guest", statsImage: includePrivate ? match.stats_image || "" : "", notes: match.notes || "", ...teams };
   }));
 });
 function formatPlayer(row) { const values = [row.kills, row.deaths, row.assists]; return { name: row.player_name, role: row.role, rank: row.rank_at_match || "", champion: row.champion_name || "", kills: row.kills ?? "", deaths: row.deaths ?? "", assists: row.assists ?? "", kda: values.every((value) => value !== null) ? values.join("/") : "-" }; }
