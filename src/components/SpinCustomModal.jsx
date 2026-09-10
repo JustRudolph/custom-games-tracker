@@ -21,11 +21,19 @@ function TeamRoster({ title, players, assignments }) {
 
 const toMatchPlayer = (name, assignments) => ({ name, role: assignments[name], champion: "", kills: "", deaths: "", assists: "" });
 
+function sortTeamByRole(players, assignments) {
+  return [...players].sort((first, second) =>
+    ROLES.indexOf(assignments[first]) - ROLES.indexOf(assignments[second]),
+  );
+}
+
 function buildSpinDraft(teamOne, teamTwo, assignments) {
+  const orderedTeamOne = sortTeamByRole(teamOne, assignments);
+  const orderedTeamTwo = sortTeamByRole(teamTwo, assignments);
   return {
     date: today(),
-    blue: teamOne.map((name) => toMatchPlayer(name, assignments)),
-    red: teamTwo.map((name) => toMatchPlayer(name, assignments)),
+    blue: orderedTeamOne.map((name) => toMatchPlayer(name, assignments)),
+    red: orderedTeamTwo.map((name) => toMatchPlayer(name, assignments)),
     winner: "",
     matchType: "spin",
     status: "draft",
