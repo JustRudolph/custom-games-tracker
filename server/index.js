@@ -183,13 +183,42 @@ function optionalStat(value) {
   return value === "" || value === null || value === undefined ? null : Number(value);
 }
 
-async function saveMatchTeams(connection, matchId, blue, red) {
+async function ensurePlayer(connection, playerName) {
+  await connection.execute(
+    "INSERT INTO players (summoner_name) VALUES (?) ON DUPLICATE KEY UPDATE summoner_name = VALUES(summoner_name)",
+    [playerName],
+  );
+  const [players] = await connection.execute("SELECT id FROM players WHERE normalized_name = LOWER(TRIM(?))", [playerName]);
+  return players[0].id;
+}
+
+async function registerMatchParticipants(connection, matchId) {
+  await connection.execute(`INSERT INTO players (summoner_name)
+    SELECT MIN(TRIM(mp.player_name))
+    FROM match_players mp
+    JOIN match_teams mt ON mt.id = mp.match_team_id
+    WHERE mt.match_id = ? AND TRIM(mp.player_name) <> ''
+    GROUP BY LOWER(TRIM(mp.player_name))
+    ON DUPLICATE KEY UPDATE summoner_name = VALUES(summoner_name)`, [matchId]);
+  await connection.execute(`UPDATE match_players mp
+    JOIN match_teams mt ON mt.id = mp.match_team_id
+    JOIN players p ON p.normalized_name = LOWER(TRIM(mp.player_name))
+    SET mp.player_id = p.id
+    WHERE mt.match_id = ?`, [matchId]);
+}
+
+async function saveMatchTeams(connection, matchId, blue, red, registerPlayers = true) {
   for (const [side, teamPlayers] of [["blue", blue], ["red", red]]) {
     const [team] = await connection.execute("INSERT INTO match_teams (match_id, side) VALUES (?, ?)", [matchId, side]);
     for (const [index, player] of teamPlayers.entries()) {
       const playerName = cleanText(player.name, 100);
-      const [found] = await connection.execute("SELECT id FROM players WHERE normalized_name = LOWER(TRIM(?))", [playerName]);
-      await connection.execute("INSERT INTO match_players (match_team_id, player_id, player_name, role, champion_name, rank_at_match, kills, deaths, assists, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [team.insertId, found[0]?.id || null, playerName, player.role, cleanText(player.champion, 80) || null, null, optionalStat(player.kills), optionalStat(player.deaths), optionalStat(player.assists), index]);
+      let playerId = null;
+      if (registerPlayers) playerId = await ensurePlayer(connection, playerName);
+      else {
+        const [found] = await connection.execute("SELECT id FROM players WHERE normalized_name = LOWER(TRIM(?))", [playerName]);
+        playerId = found[0]?.id || null;
+      }
+      await connection.execute("INSERT INTO match_players (match_team_id, player_id, player_name, role, champion_name, rank_at_match, kills, deaths, assists, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [team.insertId, playerId, playerName, player.role, cleanText(player.champion, 80) || null, null, optionalStat(player.kills), optionalStat(player.deaths), optionalStat(player.assists), index]);
     }
   }
 }
@@ -441,7 +470,7 @@ app.post("/api/match-submissions", limitGuestSubmissions, async (req, res) => {
   try {
     await connection.beginTransaction();
     const [match] = await connection.execute("INSERT INTO matches (played_at, winner_team, match_type, status, notes, stats_image, created_by) VALUES (?, ?, ?, 'pending', ?, ?, NULL)", [date, winner, matchType, cleanText(notes, 2000), statsImage || null]);
-    await saveMatchTeams(connection, match.insertId, blue, red);
+    await saveMatchTeams(connection, match.insertId, blue, red, false);
     await connection.commit();
     res.status(201).json({ id: String(match.insertId), status: "pending" });
   } catch (error) { console.error("Guest match submission failed:", error); await connection.rollback(); res.status(500).json({ error: "Could not submit match for review." }); } finally { connection.release(); }
@@ -462,9 +491,24 @@ app.post("/api/matches", requireAuth, requireWrite, async (req, res) => {
 });
 app.post("/api/matches/:id/approve", requireAuth, requireWrite, async (req, res) => {
   if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Invalid match ID." });
-  const [result] = await db.execute("UPDATE matches SET status = 'complete', created_by = ? WHERE id = ? AND status = 'pending'", [req.admin.id, req.params.id]);
-  if (!result.affectedRows) return res.status(404).json({ error: "Pending match not found." });
-  res.json({ id: String(req.params.id), status: "complete" });
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [result] = await connection.execute("UPDATE matches SET status = 'complete', created_by = ? WHERE id = ? AND status = 'pending'", [req.admin.id, req.params.id]);
+    if (!result.affectedRows) {
+      await connection.rollback();
+      return res.status(404).json({ error: "Pending match not found." });
+    }
+    await registerMatchParticipants(connection, req.params.id);
+    await connection.commit();
+    res.json({ id: String(req.params.id), status: "complete" });
+  } catch (error) {
+    console.error("Match approval failed:", error);
+    await connection.rollback();
+    res.status(500).json({ error: "Could not approve match." });
+  } finally {
+    connection.release();
+  }
 });
 app.put("/api/matches/:id", requireAuth, requireWrite, async (req, res) => {
   if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Invalid match ID." });

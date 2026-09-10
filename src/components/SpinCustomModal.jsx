@@ -74,7 +74,7 @@ export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseT
   const availablePlayers = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return playerNames
-      .filter((name) => !selectedPlayers.includes(name))
+      .filter((name) => !selectedPlayers.some((selectedName) => selectedName.toLowerCase() === name.toLowerCase()))
       .filter((name) => !normalizedQuery || name.toLowerCase().includes(normalizedQuery))
       .sort((first, second) => {
         const firstStartsWithQuery = first.toLowerCase().startsWith(normalizedQuery);
@@ -114,7 +114,13 @@ export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseT
 
   function togglePlayer(name) {
     if (drawPool) return;
-    setSelectedPlayers((current) => current.includes(name) ? current.filter((player) => player !== name) : current.length < 10 ? [...current, name] : current);
+    const normalizedName = name.trim();
+    if (!normalizedName || normalizedName.length > 100) return;
+    setSelectedPlayers((current) => {
+      const existingName = current.find((player) => player.toLowerCase() === normalizedName.toLowerCase());
+      if (existingName) return current.filter((player) => player !== existingName);
+      return current.length < 10 ? [...current, normalizedName] : current;
+    });
     setQuery("");
   }
 
@@ -122,10 +128,11 @@ export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseT
     if (event.key !== "Enter") return;
 
     const match = findFirstPlayerMatch(availablePlayers, query);
-    if (!match) return;
+    const newName = query.trim();
+    if (!match && !newName) return;
 
     event.preventDefault();
-    togglePlayer(match);
+    togglePlayer(match || newName);
   }
 
   function startDraw() {
@@ -186,7 +193,7 @@ export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseT
           <section className="spin-player-selection">
             <div className="spin-selection-head"><strong>Players</strong><span>{selectedPlayers.length}/10 selected</span></div>
             <input type="search" autoComplete="off" placeholder="Search saved players..." value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={selectFirstMatchingPlayer} />
-            {query && <div className="spin-player-results">{availablePlayers.length ? availablePlayers.map((name) => <button type="button" key={name} onClick={() => togglePlayer(name)}>{name}</button>) : <span>No players found.</span>}</div>}
+            {query && <div className="spin-player-results">{availablePlayers.length ? availablePlayers.map((name) => <button type="button" key={name} onClick={() => togglePlayer(name)}>{name}</button>) : <button type="button" onClick={() => togglePlayer(query)}>Add "{query.trim()}" as a new player</button>}</div>}
             <div className="spin-selected-players">{selectedPlayers.map((name) => <button type="button" key={name} onClick={() => togglePlayer(name)}>{name}<span>x</span></button>)}</div>
             <button className="primary-btn spin-start-button" type="button" disabled={selectedPlayers.length !== 10} onClick={startDraw}>Start team draw <span>-&gt;</span></button>
           </section>
