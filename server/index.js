@@ -420,7 +420,7 @@ app.get("/api/matches", async (req, res) => {
     ${includeDrafts ? "" : "WHERE m.status = 'complete'"}
     ORDER BY played_at DESC, id DESC LIMIT 500`);
   if (!matches.length) return res.json([]);
-  const [rows] = await db.query("SELECT mt.match_id, mt.side, mp.player_name, mp.role, mp.rank_at_match, mp.champion_name, mp.kills, mp.deaths, mp.assists, mp.sort_order FROM match_players mp JOIN match_teams mt ON mt.id = mp.match_team_id WHERE mt.match_id IN (?) ORDER BY mt.match_id DESC, mp.sort_order", [matches.map((match) => match.id)]);
+  const [rows] = await db.query("SELECT mt.match_id, mt.side, mp.player_name, mp.role, mp.rank_at_match, mp.champion_name, mp.kills, mp.deaths, mp.assists, mp.sort_order FROM match_players mp JOIN match_teams mt ON mt.id = mp.match_team_id WHERE mt.match_id IN (?) ORDER BY mt.match_id DESC, FIELD(mp.role, 'Top', 'Jungle', 'Middle', 'Bottom', 'Support'), mp.sort_order", [matches.map((match) => match.id)]);
   const teamsByMatch = new Map();
   rows.forEach((row) => {
     if (!teamsByMatch.has(row.match_id)) teamsByMatch.set(row.match_id, { blue: [], red: [] });
