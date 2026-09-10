@@ -76,7 +76,12 @@ export default function SpinCustomModal({ playerNames, canWrite, onClose, onUseT
     return playerNames
       .filter((name) => !selectedPlayers.includes(name))
       .filter((name) => !normalizedQuery || name.toLowerCase().includes(normalizedQuery))
-      .slice(0, 8);
+      .sort((first, second) => {
+        const firstStartsWithQuery = first.toLowerCase().startsWith(normalizedQuery);
+        const secondStartsWithQuery = second.toLowerCase().startsWith(normalizedQuery);
+        if (firstStartsWithQuery !== secondStartsWithQuery) return firstStartsWithQuery ? -1 : 1;
+        return first.localeCompare(second);
+      });
   }, [playerNames, query, selectedPlayers]);
 
   const teamOneComplete = teamOne.length === 5 && teamOne.every((name) => assignments[name]);

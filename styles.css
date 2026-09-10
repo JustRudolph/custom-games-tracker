@@ -992,10 +992,14 @@ textarea {
 }
 .spin-player-results {
   display: grid;
-  overflow: hidden;
+  max-height: min(320px, 40vh);
+  overflow-x: hidden;
+  overflow-y: auto;
   margin-top: 6px;
   border: 1px solid var(--line);
   background: var(--white);
+  scrollbar-color: var(--muted) transparent;
+  scrollbar-width: thin;
 }
 .spin-player-results button {
   padding: 11px 13px;
